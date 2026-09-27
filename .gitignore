@@ -34,3 +34,6 @@ out/
 
 # Local Maven settings
 .mvn/timing.properties
+
+# docs folder
+docs/
