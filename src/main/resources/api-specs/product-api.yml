@@ -54,7 +54,7 @@ paths:
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/ProductList'
+                  $ref: '#/components/schemas/ProductPage'
 
           '400':
             description: Invalid query parameters
@@ -82,7 +82,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Product'
+                $ref: '#/components/schemas/ProductRequest'
 
         responses:
           '201':
@@ -90,7 +90,7 @@ paths:
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/Product'
+                  $ref: '#/components/schemas/ProductResponse'
 
           '400':
             description: Product validation failed
@@ -129,7 +129,7 @@ paths:
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/Product'
+                  $ref: '#/components/schemas/ProductResponse'
 
           '400':
             description: Invalid product identifier
@@ -174,7 +174,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Product'
+                $ref: '#/components/schemas/ProductRequest'
 
         responses:
           '200':
@@ -182,7 +182,7 @@ paths:
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/Product'
+                  $ref: '#/components/schemas/ProductResponse'
 
           '400':
             description: Product validation failed
@@ -249,7 +249,7 @@ paths:
 
 components:
     schemas:
-      Product:
+      ProductRequest:
         type: object
         required:
           - name
@@ -257,13 +257,6 @@ components:
           - categoryId
 
         properties:
-          id:
-            type: string
-            format: uuid
-            readOnly: true
-            description: Unique product identifier in UUIDv7 format
-            example: "01a0e336-56ef-7141-ad13-2be88e663c76"
-
           name:
             type: string
             minLength: 3
@@ -291,7 +284,20 @@ components:
             description: Identifier of the product category
             example: "01a0e336-56ef-756a-8efd-4510b60f2921"
 
-      ProductList:
+      ProductResponse:
+        allOf:
+          - $ref: '#/components/schemas/ProductRequest'
+          - type: object
+            required:
+              - id
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Unique product identifier in UUIDv7 format
+                example: "01a0e336-56ef-7141-ad13-2be88e663c76"
+
+      ProductPage:
         type: object
         required:
           - content
@@ -304,7 +310,7 @@ components:
             type: array
             description: Products on the current page
             items:
-              $ref: '#/components/schemas/Product'
+              $ref: '#/components/schemas/ProductResponse'
 
           page:
             type: integer
@@ -410,7 +416,6 @@ components:
           status:
             type: integer
             description: HTTP status code
-            example: 500
 
           detail:
             type: string
