@@ -1,428 +1,537 @@
 openapi: 3.1.0
 
 info:
-    title: Product API
-    description: Product API for managing products in the system.
-    version: 1.0.0
+  title: Product API
+  description: API for managing marketplace products.
+  version: 1.0.0
 
 servers:
-  - url: http://localhost:8081/api/v1
+  - url: http://localhost:8081/marketplace/api/v1
     description: Local Development Server
 
 paths:
-    /products:
-      get:
-        summary: Get all products
-        tags:
-          - Products
-        operationId: getAllProducts
+  /products:
+    get:
+      summary: Get all products
+      tags:
+        - Products
+      operationId: getAllProducts
 
-        parameters:
-          - name: page
-            in: query
-            required: false
-            description: Zero-based page index
-            schema:
-              type: integer
-              minimum: 0
-              default: 0
-
-          - name: size
-            in: query
-            required: false
-            description: Number of products per page
-            schema:
-              type: integer
-              minimum: 1
-              maximum: 100
-              default: 20
-
-          - name: sort
-            in: query
-            required: false
-            description: Sort products by price in ascending or descending order
-            schema:
-              type: string
-              enum:
-                - PRICE_ASC
-                - PRICE_DESC
-              example: PRICE_ASC
-
-        responses:
-          '200':
-            description: Products retrieved successfully
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/ProductPage'
-
-          '400':
-            description: Invalid query parameters
-            content:
-              application/problem+json:
-                schema:
-                  $ref: '#/components/schemas/ErrorResponse'
-
-          default:
-            description: Unexpected server error
-            content:
-              application/problem+json:
-                schema:
-                  $ref: '#/components/schemas/ErrorResponse'
-
-      post:
-        summary: Create a new product
-        tags:
-          - Products
-        operationId: createProduct
-
-        requestBody:
-          required: true
-          description: Product data for creation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductRequest'
-
-        responses:
-          '201':
-            description: Product created successfully
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/ProductResponse'
-
-          '400':
-            description: Product validation failed
-            content:
-              application/problem+json:
-                schema:
-                  $ref: '#/components/schemas/ValidationError'
-
-          default:
-            description: Unexpected server error
-            content:
-              application/problem+json:
-                schema:
-                  $ref: '#/components/schemas/ErrorResponse'
-
-    /products/{id}:
-      get:
-        summary: Get a product by ID
-        tags:
-          - Products
-        operationId: getProductById
-
-        parameters:
-          - name: id
-            in: path
-            required: true
-            description: Unique product identifier
-            schema:
-              type: string
-              format: uuid
-              example: "01a0e336-56ef-756a-8efd-4510b60f2921"
-
-        responses:
-          '200':
-            description: Product found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/ProductResponse'
-
-          '400':
-            description: Invalid product identifier
-            content:
-              application/problem+json:
-                schema:
-                  $ref: '#/components/schemas/ErrorResponse'
-
-          '404':
-            description: Product not found
-            content:
-              application/problem+json:
-                schema:
-                  $ref: '#/components/schemas/ErrorResponse'
-
-          default:
-            description: Unexpected server error
-            content:
-              application/problem+json:
-                schema:
-                  $ref: '#/components/schemas/ErrorResponse'
-
-      put:
-        summary: Update a product by ID
-        tags:
-          - Products
-        operationId: updateProduct
-
-        parameters:
-          - name: id
-            in: path
-            required: true
-            description: Unique product identifier
-            schema:
-              type: string
-              format: uuid
-              example: "01a0e336-56ef-756a-8efd-4510b60f2921"
-
-        requestBody:
-          required: true
-          description: Updated product data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductRequest'
-
-        responses:
-          '200':
-            description: Product updated successfully
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/ProductResponse'
-
-          '400':
-            description: Product validation failed
-            content:
-              application/problem+json:
-                schema:
-                  $ref: '#/components/schemas/ValidationError'
-
-          '404':
-            description: Product not found
-            content:
-              application/problem+json:
-                schema:
-                  $ref: '#/components/schemas/ErrorResponse'
-
-          default:
-            description: Unexpected server error
-            content:
-              application/problem+json:
-                schema:
-                  $ref: '#/components/schemas/ErrorResponse'
-
-      delete:
-        summary: Delete a product by ID
-        tags:
-          - Products
-        operationId: deleteProduct
-
-        parameters:
-          - name: id
-            in: path
-            required: true
-            description: Unique product identifier
-            schema:
-              type: string
-              format: uuid
-              example: "01a0e336-56ef-756a-8efd-4510b60f2921"
-
-        responses:
-          '204':
-            description: Product deleted successfully
-
-          '400':
-            description: Invalid product identifier
-            content:
-              application/problem+json:
-                schema:
-                  $ref: '#/components/schemas/ErrorResponse'
-
-          '404':
-            description: Product not found
-            content:
-              application/problem+json:
-                schema:
-                  $ref: '#/components/schemas/ErrorResponse'
-
-          default:
-            description: Unexpected server error
-            content:
-              application/problem+json:
-                schema:
-                  $ref: '#/components/schemas/ErrorResponse'
-
-
-components:
-    schemas:
-      ProductRequest:
-        type: object
-        required:
-          - name
-          - price
-          - categoryId
-
-        properties:
-          name:
-            type: string
-            minLength: 3
-            maxLength: 100
-            description: Product name
-            example: "Galaxy Milk"
-
-          description:
-            type: string
-            maxLength: 500
-            description: Product description
-            example: "Milk produced in the Andromeda sector"
-
-          price:
-            type: number
-            format: decimal
-            minimum: 0.01
-            multipleOf: 0.01
-            description: Product price
-            example: 19.99
-
-          categoryId:
-            type: string
-            format: uuid
-            description: Identifier of the product category
-            example: "01a0e336-56ef-756a-8efd-4510b60f2921"
-
-      ProductResponse:
-        allOf:
-          - $ref: '#/components/schemas/ProductRequest'
-          - type: object
-            required:
-              - id
-            properties:
-              id:
-                type: string
-                format: uuid
-                description: Unique product identifier in UUIDv7 format
-                example: "01a0e336-56ef-7141-ad13-2be88e663c76"
-
-      ProductPage:
-        type: object
-        required:
-          - content
-          - page
-          - size
-          - totalElements
-
-        properties:
-          content:
-            type: array
-            description: Products on the current page
-            items:
-              $ref: '#/components/schemas/ProductResponse'
-
-          page:
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Zero-based page index
+          schema:
             type: integer
             minimum: 0
-            description: Current zero-based page index
-            example: 0
+            default: 0
 
-          size:
+        - name: size
+          in: query
+          required: false
+          description: Number of products per page
+          schema:
             type: integer
             minimum: 1
             maximum: 100
-            description: Number of products per page
-            example: 20
+            default: 20
 
-          totalElements:
-            type: integer
-            format: int64
-            minimum: 0
-            description: Total number of products
-            example: 42
-
-      ValidationError:
-        type: object
-        required:
-          - type
-          - title
-          - status
-          - detail
-          - instance
-          - errors
-
-        properties:
-          type:
+        - name: sort
+          in: query
+          required: false
+          description: Sort products by price in ascending or descending order
+          schema:
             type: string
-            format: uri
-            description: URI reference identifying the validation error type
-            example: "https://cosmo-cats.market/errors/validation"
+            enum:
+              - PRICE_ASC
+              - PRICE_DESC
+            example: PRICE_ASC
 
-          title:
+      responses:
+        '200':
+          description: Products retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductPage'
+
+        '400':
+          description: Invalid query parameters
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+        default:
+          description: Unexpected server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Create a new product
+      tags:
+        - Products
+      operationId: createProduct
+
+      requestBody:
+        required: true
+        description: Product data for creation
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+
+      responses:
+        '201':
+          description: Product created successfully
+          headers:
+            Location:
+              description: URI of the created product
+              schema:
+                type: string
+                format: uri-reference
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+
+        '400':
+          description: Product validation failed
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+        default:
+          description: Unexpected server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /products/{id}:
+    get:
+      summary: Get a product by ID
+      tags:
+        - Products
+      operationId: getProductById
+
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique product identifier
+          schema:
             type: string
-            description: Short description of the error
-            example: "Validation failed"
+            format: uuid
+            example: "01a0e336-56ef-756a-8efd-4510b60f2921"
 
-          status:
-            type: integer
-            description: HTTP status code
-            example: 400
+      responses:
+        '200':
+          description: Product found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
 
-          detail:
+        '400':
+          description: Invalid product identifier
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+        '404':
+          description: Product not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+        default:
+          description: Unexpected server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update a product by ID
+      tags:
+        - Products
+      operationId: updateProduct
+
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique product identifier
+          schema:
             type: string
-            description: Detailed description of the validation error
-            example: "Request contains invalid parameters."
+            format: uuid
+            example: "01a0e336-56ef-756a-8efd-4510b60f2921"
 
-          instance:
+      requestBody:
+        required: true
+        description: Updated product data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+
+      responses:
+        '200':
+          description: Product updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+
+        '400':
+          description: Product validation failed
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+        '404':
+          description: Product not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+        default:
+          description: Unexpected server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete a product by ID
+      tags:
+        - Products
+      operationId: deleteProduct
+
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique product identifier
+          schema:
             type: string
-            description: URI of the request that caused the error
-            example: "/api/v1/products"
+            format: uuid
+            example: "01a0e336-56ef-756a-8efd-4510b60f2921"
 
-          errors:
-            type: array
-            description: List of validation violations
-            items:
-              $ref: '#/components/schemas/FieldViolation'
+      responses:
+        '204':
+          description: Product deleted successfully
 
-      FieldViolation:
-        type: object
-        required:
-          - fieldName
-          - reason
+        '400':
+          description: Invalid product identifier
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-        properties:
-          fieldName:
-            type: string
-            description: Field where validation error occurred
-            example: "price"
+        '404':
+          description: Product not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-          reason:
-            type: string
-            description: Reason for the validation error
-            example: "must be greater than or equal to 0.01"
+        default:
+          description: Unexpected server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-      ErrorResponse:
-        type: object
-        required:
-          - type
-          - title
-          - status
-          - detail
-          - instance
+components:
+  schemas:
+    ProductRequest:
+      type: object
+      required:
+        - name
+        - price
+        - categoryId
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+          description: Product name
+          example: "Galaxy Milk"
+        description:
+          type: string
+          maxLength: 500
+          description: Product description
+          example: "Milk produced in the Andromeda sector"
+        price:
+          type: number
+          format: decimal
+          minimum: 0.01
+          multipleOf: 0.01
+          description: Product price
+          example: 19.99
+        categoryId:
+          type: string
+          format: uuid
+          description: Identifier of the product category
+          example: "01a0e336-56ef-756a-8efd-4510b60f2921"
 
-        properties:
-          type:
-            type: string
-            format: uri
-            description: URI reference identifying the error type
-            example: "https://cosmo-cats.market/errors/internal"
+    ProductResponse:
+      allOf:
+        - $ref: '#/components/schemas/ProductRequest'
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: Unique product identifier in UUIDv7 format
+              example: "01a0e336-56ef-7141-ad13-2be88e663c76"
 
-          title:
-            type: string
-            description: Short description of the error
-            example: "Internal server error"
+    ProductPage:
+      type: object
+      required:
+        - content
+        - pageable
+        - last
+        - totalPages
+        - totalElements
+        - size
+        - number
+        - sort
+        - first
+        - numberOfElements
+        - empty
+      properties:
+        content:
+          type: array
+          description: Products on the current page
+          items:
+            $ref: '#/components/schemas/ProductResponse'
+        pageable:
+          $ref: '#/components/schemas/PageableMetadata'
+        last:
+          type: boolean
+          description: Whether this is the last page
+          example: false
+        totalPages:
+          type: integer
+          minimum: 0
+          description: Total number of pages
+          example: 25
+        totalElements:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Total number of products
+          example: 50
+        size:
+          type: integer
+          minimum: 1
+          description: Requested page size
+          example: 2
+        number:
+          type: integer
+          minimum: 0
+          description: Current zero-based page index
+          example: 0
+        sort:
+          $ref: '#/components/schemas/SortMetadata'
+        first:
+          type: boolean
+          description: Whether this is the first page
+          example: true
+        numberOfElements:
+          type: integer
+          minimum: 0
+          description: Number of products on the current page
+          example: 2
+        empty:
+          type: boolean
+          description: Whether the current page has no products
+          example: false
 
-          status:
-            type: integer
-            description: HTTP status code
+    PageableMetadata:
+      type: object
+      required:
+        - pageNumber
+        - pageSize
+        - sort
+        - offset
+        - paged
+        - unpaged
+      properties:
+        pageNumber:
+          type: integer
+          minimum: 0
+          description: Current zero-based page index
+          example: 0
+        pageSize:
+          type: integer
+          minimum: 1
+          description: Requested page size
+          example: 2
+        sort:
+          $ref: '#/components/schemas/SortMetadata'
+        offset:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Zero-based offset of the current page
+          example: 0
+        paged:
+          type: boolean
+          description: Whether pagination is enabled
+          example: true
+        unpaged:
+          type: boolean
+          description: Whether pagination is disabled
+          example: false
 
-          detail:
-            type: string
-            description: Detailed description of the error
-            example: "An unexpected error occurred."
+    SortMetadata:
+      type: object
+      required:
+        - empty
+        - sorted
+        - unsorted
+      properties:
+        empty:
+          type: boolean
+          description: Whether no sort orders are configured
+          example: true
+        sorted:
+          type: boolean
+          description: Whether sorting is applied
+          example: false
+        unsorted:
+          type: boolean
+          description: Whether sorting is not applied
+          example: true
 
-          instance:
-            type: string
-            description: URI of the request that caused the error
-            example: "/api/v1/products"
+    ErrorResponse:
+      type: object
+      required:
+        - type
+        - title
+        - status
+        - detail
+        - instance
+        - code
+      properties:
+        type:
+          type: string
+          format: uri-reference
+          description: URI reference identifying the problem type
+          example: "https://cosmo-cats.market/errors/product-not-found"
+        title:
+          type: string
+          description: Short human-readable summary of the problem type
+          example: "Product not found"
+        status:
+          type: integer
+          description: HTTP status code for this problem occurrence
+          example: 404
+        detail:
+          type: string
+          description: Human-readable explanation specific to this problem occurrence
+          example: "Product with the specified identifier was not found."
+        instance:
+          type: string
+          format: uri-reference
+          description: URI reference identifying this specific problem occurrence
+          example: "/marketplace/api/v1/products/01a0e336-56ef-756a-8efd-4510b60f2921"
+        code:
+          type: string
+          description: Stable machine-readable code identifying the problem
+          example: "PRODUCT_NOT_FOUND"
+
+    ValidationError:
+      description: RFC 9457 problem details response containing field-level and object-level validation violations
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          required:
+            - invalidParameters
+          properties:
+            type:
+              type: string
+              format: uri-reference
+              const: "https://cosmo-cats.market/errors/validation"
+              description: URI identifying the constraint validation problem type
+            title:
+              type: string
+              const: "Validation failed"
+            status:
+              type: integer
+              const: 400
+            detail:
+              type: string
+              const: "The request contains invalid parameters"
+            code:
+              type: string
+              const: "VALIDATION_ERROR"
+            invalidParameters:
+              type: array
+              minItems: 1
+              description: Validation violations found in the request
+              items:
+                $ref: '#/components/schemas/ValidationErrorDetails'
+      example:
+        type: "https://cosmo-cats.market/errors/validation"
+        title: "Validation failed"
+        status: 400
+        detail: "The request contains invalid parameters"
+        instance: "/marketplace/api/v1/products"
+        code: "VALIDATION_ERROR"
+        invalidParameters:
+          - code: "product.price.invalid"
+            target: "price"
+            type: FIELD
+            arguments:
+              value: "0.01"
+              inclusive: true
+          - code: "product.price.range.invalid"
+            target: "productRequest"
+            type: OBJECT
+            arguments: {}
+
+    ValidationErrorDetails:
+      type: object
+      required:
+        - code
+        - target
+        - type
+        - arguments
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code interpreted by the client
+          example: customer.email.invalid
+        target:
+          type: string
+          description: Name or path of the invalid field, or the validated object name for a global violation
+          example: "price"
+        type:
+          type: string
+          description: Indicates whether the violation applies to a field or to the validated object as a whole
+          enum:
+            - FIELD
+            - OBJECT
+          example: FIELD
+        arguments:
+          type: object
+          description: Constraint parameters that the client can use when formatting the localized message
+          additionalProperties: true
+          example:
+            value: "0.01"
+            inclusive: true
