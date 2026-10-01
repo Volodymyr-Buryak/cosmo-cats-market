@@ -1,4 +1,4 @@
-package space.cosmocats.marketplace.сommon.config;
+package space.cosmocats.marketplace.common.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
