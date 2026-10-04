@@ -1,11 +1,11 @@
-package space.cosmocats.marketplace.domain.model;
+package space.cosmocats.marketplace.cart.domain.model;
 
 import lombok.*;
 import java.util.*;
-import space.cosmocats.marketplace.domain.model.value.CartItem;
-import space.cosmocats.marketplace.domain.model.value.Quantity;
-import space.cosmocats.marketplace.domain.exception.CartItemNotFoundException;
-import space.cosmocats.marketplace.domain.exception.CartItemQuantityMustBePositiveException;
+import space.cosmocats.marketplace.cart.domain.model.value.CartItem;
+import space.cosmocats.marketplace.product.domain.model.value.Quantity;
+import space.cosmocats.marketplace.cart.domain.exception.CartItemNotFoundException;
+import space.cosmocats.marketplace.cart.domain.exception.CartItemQuantityMustBePositiveException;
 
 @ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)

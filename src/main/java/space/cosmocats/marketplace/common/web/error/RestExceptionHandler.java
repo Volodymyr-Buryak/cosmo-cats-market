@@ -1,4 +1,4 @@
-package space.cosmocats.marketplace.api.http.error;
+package space.cosmocats.marketplace.common.web.error;
 
 import java.net.URI;
 import java.util.List;
@@ -13,11 +13,13 @@ import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.context.i18n.LocaleContextHolder;
-import space.cosmocats.marketplace.api.http.error.dto.ApiError;
-import space.cosmocats.marketplace.api.http.error.dto.ApiProblem;
+import space.cosmocats.marketplace.common.web.error.dto.ApiError;
+import space.cosmocats.marketplace.common.web.error.dto.ApiProblem;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import space.cosmocats.marketplace.common.exception.NotFoundException;
 
 
 @Slf4j
@@ -26,6 +28,16 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final String BASE_ERROR_URI = "https://cosmo-cats.market/errors";
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ProblemDetail> handleNotFound(NotFoundException ex) {
+        String detail = getMessageSource().getMessage(
+                ex.getMessageKey(), ex.getArgs(), LocaleContextHolder.getLocale()
+        );
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, detail);
+        problemDetail.setType(URI.create(BASE_ERROR_URI + "/not-found"));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail);
+    }
 
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(

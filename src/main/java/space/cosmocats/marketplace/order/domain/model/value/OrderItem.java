@@ -1,7 +1,9 @@
-package space.cosmocats.marketplace.domain.model.value;
+package space.cosmocats.marketplace.order.domain.model.value;
 
 import lombok.*;
 import java.util.UUID;
+import space.cosmocats.marketplace.product.domain.model.value.Money;
+import space.cosmocats.marketplace.product.domain.model.value.Quantity;
 
 @Builder
 public record OrderItem(

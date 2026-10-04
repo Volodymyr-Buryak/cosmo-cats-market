@@ -1,4 +1,4 @@
-package space.cosmocats.marketplace.domain.model.value;
+package space.cosmocats.marketplace.product.domain.model.value;
 
 import lombok.NonNull;
 

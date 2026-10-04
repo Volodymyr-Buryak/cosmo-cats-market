@@ -1,8 +1,8 @@
-package space.cosmocats.marketplace.domain.model;
+package space.cosmocats.marketplace.product.domain.model;
 
 import lombok.*;
 import java.util.*;
-import space.cosmocats.marketplace.domain.exception.CategoryCannotBeOwnParentException;
+import space.cosmocats.marketplace.product.domain.exception.CategoryCannotBeOwnParentException;
 
 @Getter
 @ToString

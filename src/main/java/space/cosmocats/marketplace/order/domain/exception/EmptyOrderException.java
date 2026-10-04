@@ -1,4 +1,4 @@
-package space.cosmocats.marketplace.domain.exception;
+package space.cosmocats.marketplace.order.domain.exception;
 
 import space.cosmocats.marketplace.common.exception.BusinessRuleException;
 

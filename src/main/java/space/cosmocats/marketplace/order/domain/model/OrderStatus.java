@@ -1,4 +1,4 @@
-package space.cosmocats.marketplace.domain.model;
+package space.cosmocats.marketplace.order.domain.model;
 
 public enum OrderStatus {
     CREATED,

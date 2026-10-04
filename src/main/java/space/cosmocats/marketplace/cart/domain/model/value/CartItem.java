@@ -1,7 +1,8 @@
-package space.cosmocats.marketplace.domain.model.value;
+package space.cosmocats.marketplace.cart.domain.model.value;
 
 import lombok.NonNull;
 import java.util.UUID;
+import space.cosmocats.marketplace.product.domain.model.value.Quantity;
 
 public record CartItem(
         @NonNull UUID productId,

@@ -1,8 +1,8 @@
-package space.cosmocats.marketplace.domain.exception;
+package space.cosmocats.marketplace.order.domain.exception;
 
 import java.util.UUID;
 import space.cosmocats.marketplace.common.exception.BusinessRuleException;
-import space.cosmocats.marketplace.domain.model.OrderStatus;
+import space.cosmocats.marketplace.order.domain.model.OrderStatus;
 
 public final class InvalidOrderStateTransitionException extends BusinessRuleException {
     private static final String MESSAGE_KEY = "error.order.invalid-state-transition";

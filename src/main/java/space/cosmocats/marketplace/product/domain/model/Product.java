@@ -1,15 +1,15 @@
-package space.cosmocats.marketplace.domain.model;
+package space.cosmocats.marketplace.product.domain.model;
 
 import lombok.*;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Locale;
 import java.util.Arrays;
-import space.cosmocats.marketplace.domain.model.value.Money;
-import space.cosmocats.marketplace.domain.model.value.Quantity;
-import space.cosmocats.marketplace.domain.exception.InsufficientStockException;
-import space.cosmocats.marketplace.domain.exception.ProductPriceMustBePositiveException;
-import space.cosmocats.marketplace.domain.exception.ProductNameMustContainSpaceWordException;
+import space.cosmocats.marketplace.product.domain.model.value.Money;
+import space.cosmocats.marketplace.product.domain.model.value.Quantity;
+import space.cosmocats.marketplace.product.domain.exception.InsufficientStockException;
+import space.cosmocats.marketplace.product.domain.exception.ProductPriceMustBePositiveException;
+import space.cosmocats.marketplace.product.domain.exception.ProductNameMustContainSpaceWordException;
 
 @Getter
 @ToString
@@ -72,4 +72,3 @@ public final class Product {
                 .anyMatch(SPACE_WORDS::contains);
     }
 }
-

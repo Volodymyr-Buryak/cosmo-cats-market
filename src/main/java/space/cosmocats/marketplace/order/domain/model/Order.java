@@ -1,12 +1,12 @@
-package space.cosmocats.marketplace.domain.model;
+package space.cosmocats.marketplace.order.domain.model;
 
 import lombok.*;
 import java.util.*;
 import java.time.Instant;
-import space.cosmocats.marketplace.domain.model.value.Money;
-import space.cosmocats.marketplace.domain.model.value.OrderItem;
-import space.cosmocats.marketplace.domain.exception.EmptyOrderException;
-import space.cosmocats.marketplace.domain.exception.InvalidOrderStateTransitionException;
+import space.cosmocats.marketplace.product.domain.model.value.Money;
+import space.cosmocats.marketplace.order.domain.model.value.OrderItem;
+import space.cosmocats.marketplace.order.domain.exception.EmptyOrderException;
+import space.cosmocats.marketplace.order.domain.exception.InvalidOrderStateTransitionException;
 
 @Getter
 @ToString
