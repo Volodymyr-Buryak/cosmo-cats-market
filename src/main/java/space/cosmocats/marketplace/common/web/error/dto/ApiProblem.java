@@ -1,4 +1,4 @@
-package space.cosmocats.marketplace.api.http.error.dto;
+package space.cosmocats.marketplace.common.web.error.dto;
 
 import lombok.*;
 import java.util.List;

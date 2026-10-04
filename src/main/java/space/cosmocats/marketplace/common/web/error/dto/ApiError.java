@@ -1,4 +1,4 @@
-package space.cosmocats.marketplace.api.http.error.dto;
+package space.cosmocats.marketplace.common.web.error.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
