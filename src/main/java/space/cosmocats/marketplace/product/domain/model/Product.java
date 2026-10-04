@@ -1,12 +1,10 @@
 package space.cosmocats.marketplace.product.domain.model;
 
 import lombok.*;
-import java.util.Set;
 import java.util.UUID;
-import java.util.Locale;
-import java.util.Arrays;
 import space.cosmocats.marketplace.product.domain.model.value.Money;
 import space.cosmocats.marketplace.product.domain.model.value.Quantity;
+import space.cosmocats.marketplace.product.domain.model.value.CosmicWord;
 import space.cosmocats.marketplace.product.domain.exception.InsufficientStockException;
 import space.cosmocats.marketplace.product.domain.exception.ProductPriceMustBePositiveException;
 import space.cosmocats.marketplace.product.domain.exception.ProductNameMustContainSpaceWordException;
@@ -15,8 +13,6 @@ import space.cosmocats.marketplace.product.domain.exception.ProductNameMustConta
 @ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public final class Product {
-
-    private static final Set<String> SPACE_WORDS = Set.of("star", "galaxy", "comet");
 
     @EqualsAndHashCode.Include
     private final UUID id;
@@ -41,7 +37,7 @@ public final class Product {
             throw new IllegalArgumentException("Product name must not be blank");
         }
 
-        if (!hasSpaceWord(cleanName)) {
+        if (!CosmicWord.occursIn(cleanName)) {
             throw new ProductNameMustContainSpaceWordException();
         }
 
@@ -67,8 +63,4 @@ public final class Product {
         stock = stock.subtract(amount);
     }
 
-    private static boolean hasSpaceWord(String name) {
-        return Arrays.stream(name.toLowerCase(Locale.ROOT).split("[^a-z]+"))
-                .anyMatch(SPACE_WORDS::contains);
-    }
 }

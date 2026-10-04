@@ -1,15 +1,16 @@
 package space.cosmocats.marketplace.product.web;
 
+import java.net.URI;
 import java.util.UUID;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import space.cosmocats.marketplace.product.web.dto.request.ProductRequest;
 import space.cosmocats.marketplace.product.web.dto.response.ProductResponse;
 import space.cosmocats.marketplace.product.web.dto.request.ProductPageRequest;
 import space.cosmocats.marketplace.product.application.service.ProductService;
-import space.cosmocats.marketplace.product.web.dto.request.CreateProductRequest;
-import space.cosmocats.marketplace.product.web.dto.request.UpdateProductRequest;
 import space.cosmocats.marketplace.product.web.dto.response.ProductPageResponse;
 
 @RestController
@@ -21,41 +22,44 @@ public class ProductController {
     private final ProductService productService;
 
     @GetMapping
-    public ProductPageResponse getAllProducts(@Valid @ModelAttribute ProductPageRequest request) {
-        return productMapper.toResponse(
-                productService.getAllProducts(productMapper.toCriteria(request))
+    public ResponseEntity<ProductPageResponse> getAllProducts(@Valid @ModelAttribute ProductPageRequest request) {
+        return ResponseEntity.ok(
+                productMapper.toPageResponse(productService.getAllProducts(productMapper.toCriteria(request)))
         );
     }
 
     @GetMapping("/{id}")
-    public ProductResponse getProductById(@PathVariable UUID id) {
-        return productMapper.toResponse(
-                productService.getProductById(id)
-        );
+    public ResponseEntity<ProductResponse> getProductById(@PathVariable UUID id) {
+        return ResponseEntity.ok(productMapper.toResponse(productService.getProductById(id)));
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public ProductResponse createProduct(@Valid @RequestBody CreateProductRequest request) {
-        return productMapper.toResponse(
-                productService.createProduct(productMapper.toDomain(request))
+    public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequest request) {
+        ProductResponse created = productMapper.toResponse(
+                productService.createProduct(productMapper.toDomain(UUID.randomUUID(), request))
         );
+
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(created.id())
+                .toUri();
+
+        return ResponseEntity.created(location).body(created);
     }
 
     @PutMapping("/{id}")
-    public ProductResponse updateProduct(
+    public ResponseEntity<ProductResponse> updateProduct(
             @PathVariable UUID id,
-            @Valid @RequestBody UpdateProductRequest request
+            @Valid @RequestBody ProductRequest request
     ) {
-        return productMapper.toResponse(
-                productService.updateProduct(productMapper.toDomain(id, request))
+        return ResponseEntity.ok(
+                productMapper.toResponse(productService.updateProduct(productMapper.toDomain(id, request)))
         );
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteProduct(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteProduct(@PathVariable UUID id) {
         productService.deleteProduct(id);
+        return ResponseEntity.noContent().build();
     }
-
 }
