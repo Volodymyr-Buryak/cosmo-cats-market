@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: 8080
   servlet:
     context-path: /marketplace
 
@@ -8,8 +8,7 @@ spring:
     name: marketplace
 
 springdoc:
+  api-docs:
+    enabled: false
   swagger-ui:
-    enabled: true
-    path: /swagger-ui.html
-    url: /marketplace/api-specs/product-api.yml
-    disable-swagger-default-url: true
+    enabled: false
