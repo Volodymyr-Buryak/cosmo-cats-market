@@ -39,5 +39,4 @@ public class ApiProblem extends ProblemDetail {
     private static List<ApiError> copyErrors(List<ApiError> errors) {
         return (errors == null) ? List.of() : List.copyOf(errors);
     }
-
 }

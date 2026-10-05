@@ -16,12 +16,12 @@ public class Category {
     @Builder(toBuilder = true)
     private Category(UUID id, @NonNull String name, String description, UUID parentId) {
         this.id = Objects.requireNonNullElseGet(id, UUID::randomUUID);
+        this.name = validateName(name);
 
         if (this.id.equals(parentId)) {
-            throw new CategoryCannotBeOwnParentException(this.id);
+            throw new CategoryCannotBeOwnParentException(this.id, this.name);
         }
 
-        this.name = validateName(name);
         this.description = (description == null) ? "" : description.strip();
         this.parentId = parentId;
     }

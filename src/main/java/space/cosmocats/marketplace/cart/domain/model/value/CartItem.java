@@ -3,6 +3,7 @@ package space.cosmocats.marketplace.cart.domain.model.value;
 import lombok.NonNull;
 import java.util.UUID;
 import space.cosmocats.marketplace.product.domain.model.value.Quantity;
+import space.cosmocats.marketplace.cart.domain.exception.CartItemQuantityMustBePositiveException;
 
 public record CartItem(
         @NonNull UUID productId,
@@ -10,7 +11,7 @@ public record CartItem(
 ) {
     public CartItem {
         if (quantity.isZero()) {
-            throw new IllegalArgumentException("Cart item quantity must be greater than zero");
+            throw new CartItemQuantityMustBePositiveException();
         }
     }
 

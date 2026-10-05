@@ -6,6 +6,6 @@ public final class ProductPriceMustBePositiveException extends BusinessRuleExcep
     private static final String MESSAGE_KEY = "error.product.price-must-be-positive";
 
     public ProductPriceMustBePositiveException() {
-        super(MESSAGE_KEY);
+        super(MESSAGE_KEY, "Product price must be greater than zero");
     }
 }

@@ -46,7 +46,7 @@ public class Product {
             throw new IllegalArgumentException("Stock amount must be greater than zero");
         }
         if (amount.value() > stock.value()) {
-            throw new InsufficientStockException(id, stock.value(), amount.value());
+            throw new InsufficientStockException(id, name, stock.value(), amount.value());
         }
         return withStock(stock.subtract(amount));
     }

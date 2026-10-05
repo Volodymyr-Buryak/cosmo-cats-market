@@ -6,6 +6,6 @@ public final class CartItemQuantityMustBePositiveException extends BusinessRuleE
     private static final String MESSAGE_KEY = "error.cart-item.quantity-must-be-positive";
 
     public CartItemQuantityMustBePositiveException() {
-        super(MESSAGE_KEY);
+        super(MESSAGE_KEY, "Cart item quantity must be greater than zero");
     }
 }

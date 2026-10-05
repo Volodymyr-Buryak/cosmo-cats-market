@@ -14,7 +14,6 @@ import org.hibernate.proxy.HibernateProxy;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ProductEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @Setter(AccessLevel.NONE)
     private UUID id;
     private String name;
@@ -26,9 +25,10 @@ public class ProductEntity {
 
     @Builder
     public ProductEntity(
-            String name, String description, BigDecimal price,
+            UUID id, String name, String description, BigDecimal price,
             String currency, Integer stock, UUID categoryIdRef
     ) {
+        this.id = id;
         this.name = name;
         this.price = price;
         this.stock = stock;

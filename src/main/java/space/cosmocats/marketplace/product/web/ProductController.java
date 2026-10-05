@@ -6,8 +6,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import space.cosmocats.marketplace.product.web.dto.request.ProductRequest;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import space.cosmocats.marketplace.product.web.dto.response.ProductResponse;
 import space.cosmocats.marketplace.product.web.dto.request.ProductPageRequest;
 import space.cosmocats.marketplace.product.application.service.ProductService;
@@ -35,8 +35,8 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequest request) {
-        ProductResponse created = productMapper.toResponse(
-                productService.createProduct(productMapper.toDomain(UUID.randomUUID(), request))
+        var created = productMapper.toResponse(
+                productService.createProduct(productMapper.toDomain(request))
         );
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
@@ -62,4 +62,5 @@ public class ProductController {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
     }
+
 }

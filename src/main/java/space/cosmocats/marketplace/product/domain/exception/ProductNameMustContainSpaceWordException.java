@@ -6,6 +6,6 @@ public final class ProductNameMustContainSpaceWordException extends BusinessRule
     private static final String MESSAGE_KEY = "error.product.name-must-contain-space-word";
 
     public ProductNameMustContainSpaceWordException() {
-        super(MESSAGE_KEY);
+        super(MESSAGE_KEY, "Product name does not contain a required cosmic word");
     }
 }

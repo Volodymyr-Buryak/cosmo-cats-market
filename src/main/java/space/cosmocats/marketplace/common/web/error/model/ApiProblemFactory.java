@@ -3,8 +3,7 @@ package space.cosmocats.marketplace.common.web.error.model;
 import java.net.URI;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.context.MessageSource;
 import org.springframework.web.context.request.WebRequest;
@@ -74,6 +73,7 @@ public class ApiProblemFactory {
         return new ApiProblem(problemDetail, errors);
     }
 
+
     private static URI errorType(String type) {
         return URI.create(BASE_ERROR_URI + "/" + type);
     }
@@ -88,4 +88,5 @@ public class ApiProblemFactory {
     private String localize(String messageKey, String defaultMessage, Object... arguments) {
         return messageSource.getMessage(messageKey, arguments, defaultMessage, LocaleContextHolder.getLocale());
     }
+
 }

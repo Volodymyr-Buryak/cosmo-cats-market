@@ -30,6 +30,10 @@ public interface ProductMapper {
 
     ProductPageResponse toPageResponse(PageResult<Product> page);
 
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "price", expression = "java(toMoney(request.price(), request.currency()))")
+    Product toDomain(ProductRequest request);
+
     @Mapping(target = "id", source = "id")
     @Mapping(target = "price", expression = "java(toMoney(request.price(), request.currency()))")
     Product toDomain(UUID id, ProductRequest request);
@@ -41,4 +45,5 @@ public interface ProductMapper {
     default Quantity toQuantity(Integer stock) {
         return new Quantity(stock);
     }
+
 }

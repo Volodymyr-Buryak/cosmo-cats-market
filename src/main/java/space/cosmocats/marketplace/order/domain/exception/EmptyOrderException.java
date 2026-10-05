@@ -6,6 +6,6 @@ public final class EmptyOrderException extends BusinessRuleException {
     private static final String MESSAGE_KEY = "error.order.empty";
 
     public EmptyOrderException() {
-        super(MESSAGE_KEY);
+        super(MESSAGE_KEY, "Order creation failed because the order contains no items");
     }
 }
