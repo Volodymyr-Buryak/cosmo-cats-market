@@ -2,6 +2,7 @@ package space.cosmocats.marketplace.product.domain.model;
 
 import lombok.*;
 import java.util.UUID;
+import java.util.Objects;
 import space.cosmocats.marketplace.product.domain.model.value.Money;
 import space.cosmocats.marketplace.product.domain.model.value.Quantity;
 import space.cosmocats.marketplace.product.domain.model.value.CosmicWord;
@@ -9,58 +10,63 @@ import space.cosmocats.marketplace.product.domain.exception.InsufficientStockExc
 import space.cosmocats.marketplace.product.domain.exception.ProductPriceMustBePositiveException;
 import space.cosmocats.marketplace.product.domain.exception.ProductNameMustContainSpaceWordException;
 
-@Getter
-@ToString
+@Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public final class Product {
-
+public class Product {
     @EqualsAndHashCode.Include
-    private final UUID id;
-    private final String name;
-    private final String description;
-    private final Money price;
-    private final UUID categoryId;
-    private Quantity stock;
+    UUID id;
+
+    @With String name;
+    @With String description;
+    @With Money price;
+    @With UUID categoryId;
+
+    @With(AccessLevel.PRIVATE)
+    Quantity stock;
 
     @Builder
     private Product(
-            @NonNull UUID id,
+            UUID id,
             @NonNull String name,
             String description,
             @NonNull Money price,
-            @NonNull Quantity stock,
-            @NonNull UUID categoryId
+            @NonNull UUID categoryId,
+            @NonNull Quantity stock
     ) {
-        String cleanName = name.strip();
-
-        if (cleanName.isEmpty()) {
-            throw new IllegalArgumentException("Product name must not be blank");
-        }
-
-        if (!CosmicWord.occursIn(cleanName)) {
-            throw new ProductNameMustContainSpaceWordException();
-        }
-
-        if (price.isZero()) {
-            throw new ProductPriceMustBePositiveException();
-        }
-
-        this.id = id;
-        this.name = cleanName;
+        this.id = Objects.requireNonNullElseGet(id, UUID::randomUUID);
+        this.name = validateName(name);
         this.description = (description == null) ? "" : description.strip();
-        this.price = price;
-        this.stock = stock;
+        this.price = validatePrice(price);
         this.categoryId = categoryId;
+        this.stock = stock;
     }
 
-    public void removeStock(@NonNull Quantity amount) {
+    public Product removeStock(@NonNull Quantity amount) {
         if (amount.isZero()) {
             throw new IllegalArgumentException("Stock amount must be greater than zero");
         }
         if (amount.value() > stock.value()) {
             throw new InsufficientStockException(id, stock.value(), amount.value());
         }
-        stock = stock.subtract(amount);
+        return withStock(stock.subtract(amount));
+    }
+
+    private static String validateName(String name) {
+        String normalized = name.strip();
+        if (normalized.isBlank()) {
+            throw new IllegalArgumentException("Product name must not be blank");
+        }
+        if (!CosmicWord.occursIn(normalized)) {
+            throw new ProductNameMustContainSpaceWordException();
+        }
+        return normalized;
+    }
+
+    private static Money validatePrice(Money price) {
+        if (price.isZero()) {
+            throw new ProductPriceMustBePositiveException();
+        }
+        return price;
     }
 
 }
