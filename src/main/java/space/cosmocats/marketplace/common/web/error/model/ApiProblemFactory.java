@@ -10,8 +10,9 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import space.cosmocats.marketplace.common.exception.ConflictException;
 import space.cosmocats.marketplace.common.exception.NotFoundException;
-import space.cosmocats.marketplace.common.exception.BusinessRuleException;
+import space.cosmocats.marketplace.common.exception.DomainRuleViolationException;
 
 @Component
 @RequiredArgsConstructor
@@ -33,14 +34,28 @@ public class ApiProblemFactory {
                 .build();
     }
 
-    public ApiProblem businessRuleViolation(BusinessRuleException exception, WebRequest request) {
+    public ApiProblem domainRuleViolation(DomainRuleViolationException exception, WebRequest request) {
         return ApiProblem.builder()
                 .status(HttpStatus.UNPROCESSABLE_CONTENT)
-                .type(errorType("business-rule-violation"))
-                .title(localize("error.business-rule.title", "Business rule violation"))
+                .type(errorType("domain-rule-violation"))
+                .title(localize("error.domain-rule-violation.title", "Domain rule violation"))
                 .detail(localize(
                         exception.getMessageKey(),
-                        "The operation could not be completed because it violates a business rule.",
+                        "The operation could not be completed because it violates a domain rule.",
+                        exception.getArgs()
+                ))
+                .instance(resolveRequestInstance(request))
+                .build();
+    }
+
+    public ApiProblem conflict(ConflictException exception, WebRequest request) {
+        return ApiProblem.builder()
+                .status(HttpStatus.CONFLICT)
+                .type(errorType("conflict"))
+                .title(localize("error.conflict.title", "Conflict"))
+                .detail(localize(
+                        exception.getMessageKey(),
+                        "The operation conflicts with the current state of the resource.",
                         exception.getArgs()
                 ))
                 .instance(resolveRequestInstance(request))

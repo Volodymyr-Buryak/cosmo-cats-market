@@ -1,8 +1,8 @@
 package space.cosmocats.marketplace.product.domain.exception;
 
-import space.cosmocats.marketplace.common.exception.BusinessRuleException;
+import space.cosmocats.marketplace.common.exception.DomainRuleViolationException;
 
-public final class ProductNameMustContainSpaceWordException extends BusinessRuleException {
+public final class ProductNameMustContainSpaceWordException extends DomainRuleViolationException {
     private static final String MESSAGE_KEY = "error.product.name-must-contain-space-word";
 
     public ProductNameMustContainSpaceWordException() {

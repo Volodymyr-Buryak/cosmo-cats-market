@@ -1,9 +1,9 @@
 package space.cosmocats.marketplace.product.domain.exception;
 
 import java.util.UUID;
-import space.cosmocats.marketplace.common.exception.BusinessRuleException;
+import space.cosmocats.marketplace.common.exception.DomainRuleViolationException;
 
-public final class InsufficientStockException extends BusinessRuleException {
+public final class InsufficientStockException extends DomainRuleViolationException {
     private static final String MESSAGE_KEY = "error.product.insufficient-stock";
     private static final String MESSAGE_TEMPLATE =
             "Product stock is insufficient: productId=%s, available=%d, requested=%d";

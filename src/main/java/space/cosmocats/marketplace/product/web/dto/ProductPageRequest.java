@@ -1,4 +1,4 @@
-package space.cosmocats.marketplace.product.web.dto.request;
+package space.cosmocats.marketplace.product.web.dto;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Positive;

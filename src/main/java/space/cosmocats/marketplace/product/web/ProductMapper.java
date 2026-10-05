@@ -7,13 +7,13 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import space.cosmocats.marketplace.common.pagination.PageResult;
 import space.cosmocats.marketplace.product.domain.model.Product;
+import space.cosmocats.marketplace.product.web.dto.ProductRequest;
+import space.cosmocats.marketplace.product.web.dto.ProductResponse;
 import space.cosmocats.marketplace.product.domain.model.value.Money;
+import space.cosmocats.marketplace.product.web.dto.ProductPageRequest;
 import space.cosmocats.marketplace.product.domain.model.value.Quantity;
-import space.cosmocats.marketplace.product.web.dto.request.ProductRequest;
-import space.cosmocats.marketplace.product.web.dto.response.ProductResponse;
+import space.cosmocats.marketplace.product.web.dto.ProductPageResponse;
 import space.cosmocats.marketplace.product.domain.repository.ProductCriteria;
-import space.cosmocats.marketplace.product.web.dto.request.ProductPageRequest;
-import space.cosmocats.marketplace.product.web.dto.response.ProductPageResponse;
 
 @Mapper(componentModel = "spring")
 public interface ProductMapper {
@@ -28,6 +28,7 @@ public interface ProductMapper {
     @Mapping(target = "currency", source = "price.currency.currencyCode")
     ProductResponse toResponse(Product product);
 
+    @Mapping(target = "hasContent", expression = "java(page.hasContent())")
     ProductPageResponse toPageResponse(PageResult<Product> page);
 
     @Mapping(target = "id", ignore = true)

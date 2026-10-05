@@ -354,13 +354,17 @@ components:
     ProductPageResponse:
       type: object
       additionalProperties: false
-      required: [content, page, size, totalElements, totalPages]
+      required: [content, hasContent, page, size, totalElements, totalPages]
       properties:
         content:
           type: array
           description: Products on the current page.
           items:
             $ref: '#/components/schemas/ProductResponse'
+        hasContent:
+          type: boolean
+          description: Whether the current page contains any products.
+          example: true
         page:
           type: integer
           minimum: 0
@@ -468,6 +472,7 @@ components:
             currency: USD
             stock: 85
             categoryId: 20000000-0000-4000-8000-000000000001
+        hasContent: true
         page: 0
         size: 20
         totalElements: 12

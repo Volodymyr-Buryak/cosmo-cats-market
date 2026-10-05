@@ -8,8 +8,9 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import space.cosmocats.marketplace.common.web.error.model.ApiProblem;
+import space.cosmocats.marketplace.common.exception.ConflictException;
 import space.cosmocats.marketplace.common.exception.NotFoundException;
-import space.cosmocats.marketplace.common.exception.BusinessRuleException;
+import space.cosmocats.marketplace.common.exception.DomainRuleViolationException;
 import space.cosmocats.marketplace.common.web.error.model.ApiProblemFactory;
 
 @Slf4j
@@ -37,13 +38,24 @@ public class GlobalExceptionHandler {
                 .body(problemFactory.notFound(ex, request));
     }
 
-    @ExceptionHandler(BusinessRuleException.class)
-    public ResponseEntity<ApiProblem> handleBusinessRuleException(BusinessRuleException ex, WebRequest request) {
+    @ExceptionHandler(DomainRuleViolationException.class)
+    public ResponseEntity<ApiProblem> handleDomainRuleViolationException(
+            DomainRuleViolationException ex, WebRequest request
+    ) {
         log.warn("{}, request={}", ex.getMessage(), request.getDescription(false));
 
         return ResponseEntity
                 .status(HttpStatus.UNPROCESSABLE_CONTENT)
-                .body(problemFactory.businessRuleViolation(ex, request));
+                .body(problemFactory.domainRuleViolation(ex, request));
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiProblem> handleConflictException(ConflictException ex, WebRequest request) {
+        log.warn("{}, request={}", ex.getMessage(), request.getDescription(false));
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(problemFactory.conflict(ex, request));
     }
 
 }

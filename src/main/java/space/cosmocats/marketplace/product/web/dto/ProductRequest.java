@@ -1,4 +1,4 @@
-package space.cosmocats.marketplace.product.web.dto.request;
+package space.cosmocats.marketplace.product.web.dto;
 
 import java.util.UUID;
 import java.math.BigDecimal;

@@ -6,12 +6,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import space.cosmocats.marketplace.product.web.dto.request.ProductRequest;
+import space.cosmocats.marketplace.product.web.dto.ProductRequest;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import space.cosmocats.marketplace.product.web.dto.response.ProductResponse;
-import space.cosmocats.marketplace.product.web.dto.request.ProductPageRequest;
+import space.cosmocats.marketplace.product.web.dto.ProductResponse;
+import space.cosmocats.marketplace.product.web.dto.ProductPageRequest;
 import space.cosmocats.marketplace.product.application.service.ProductService;
-import space.cosmocats.marketplace.product.web.dto.response.ProductPageResponse;
+import space.cosmocats.marketplace.product.web.dto.ProductPageResponse;
 
 @RestController
 @RequiredArgsConstructor

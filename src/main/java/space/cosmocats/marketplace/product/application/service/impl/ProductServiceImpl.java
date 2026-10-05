@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import space.cosmocats.marketplace.product.domain.repository.ProductCriteria;
 import space.cosmocats.marketplace.product.application.service.ProductService;
 import space.cosmocats.marketplace.product.domain.repository.ProductRepository;
-import space.cosmocats.marketplace.product.domain.exception.ProductNotFoundException;
+import space.cosmocats.marketplace.product.application.exception.ProductNotFoundException;
 
 @Service
 @RequiredArgsConstructor

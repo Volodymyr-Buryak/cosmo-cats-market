@@ -9,9 +9,9 @@ import space.cosmocats.marketplace.order.domain.exception.EmptyOrderException;
 import space.cosmocats.marketplace.order.domain.exception.InvalidOrderStateTransitionException;
 
 @Getter
-@ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public final class Order {
+
     @EqualsAndHashCode.Include
     private final UUID id;
     private final UUID buyerId;
@@ -21,18 +21,21 @@ public final class Order {
     private OrderStatus status;
 
     @Builder
-    public Order(
-            @NonNull UUID id,
+    private Order(
+            UUID id,
             @NonNull UUID buyerId,
             @NonNull List<OrderItem> items,
-            @NonNull Instant createdAt
+            @NonNull Instant createdAt,
+            OrderStatus status
     ) {
-        this.id = id;
         this.buyerId = buyerId;
+        this.createdAt = createdAt;
+
         this.items = checkAndCopyItems(items);
         this.total = calculateTotal(this.items);
-        this.createdAt = createdAt;
-        this.status = OrderStatus.CREATED;
+
+        this.id = Objects.requireNonNullElseGet(id, UUID::randomUUID);
+        this.status = Objects.requireNonNullElse(status, OrderStatus.CREATED);
     }
 
     private static List<OrderItem> checkAndCopyItems(List<OrderItem> items) {
@@ -61,17 +64,17 @@ public final class Order {
         changeStatus(OrderStatus.SHIPPED, OrderStatus.DELIVERED);
     }
 
-    private void changeStatus(OrderStatus expectedStatus, OrderStatus newStatus) {
-        if (status != expectedStatus) {
-            throw new InvalidOrderStateTransitionException(id, status, newStatus);
-        }
-        status = newStatus;
-    }
-
     public void cancel() {
         if (!(status == OrderStatus.CREATED || status == OrderStatus.PAID)) {
             throw new InvalidOrderStateTransitionException(id, status, OrderStatus.CANCELLED);
         }
         status = OrderStatus.CANCELLED;
+    }
+
+    private void changeStatus(OrderStatus expectedStatus, OrderStatus newStatus) {
+        if (status != expectedStatus) {
+            throw new InvalidOrderStateTransitionException(id, status, newStatus);
+        }
+        status = newStatus;
     }
 }
