@@ -4,30 +4,33 @@ import lombok.*;
 import java.util.*;
 import space.cosmocats.marketplace.product.domain.exception.CategoryCannotBeOwnParentException;
 
-@Getter
-@ToString
+@Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public final class Category {
+public class Category {
     @EqualsAndHashCode.Include
-    private final UUID id;
-    private final String name;
-    private final String description;
-    private final UUID parentId;
+    UUID id;
+    String name;
+    String description;
+    UUID parentId;
 
-    @Builder
-    private Category(@NonNull UUID id, @NonNull String name, String description, UUID parentId) {
-        String cleanName = name.strip();
-        if (cleanName.isEmpty()) {
-            throw new IllegalArgumentException("Category name must not be blank");
+    @Builder(toBuilder = true)
+    private Category(UUID id, @NonNull String name, String description, UUID parentId) {
+        this.id = Objects.requireNonNullElseGet(id, UUID::randomUUID);
+
+        if (this.id.equals(parentId)) {
+            throw new CategoryCannotBeOwnParentException(this.id);
         }
 
-        if (id.equals(parentId)) {
-            throw new CategoryCannotBeOwnParentException(id);
-        }
-
-        this.id = id;
-        this.name = cleanName;
+        this.name = validateName(name);
         this.description = (description == null) ? "" : description.strip();
         this.parentId = parentId;
+    }
+
+    private static String validateName(String name) {
+        String normalized = name.strip();
+        if (normalized.isBlank()) {
+            throw new IllegalArgumentException("Category name must not be blank");
+        }
+        return normalized;
     }
 }
