@@ -7,11 +7,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import space.cosmocats.marketplace.product.web.dto.ProductRequest;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import space.cosmocats.marketplace.product.web.dto.ProductResponse;
 import space.cosmocats.marketplace.product.web.dto.ProductPageRequest;
-import space.cosmocats.marketplace.product.application.service.ProductService;
 import space.cosmocats.marketplace.product.web.dto.ProductPageResponse;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import space.cosmocats.marketplace.product.application.service.ProductService;
 
 @RestController
 @RequiredArgsConstructor

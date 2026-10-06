@@ -397,7 +397,7 @@ components:
 
     Product:
       type: object
-      required: [id, name, price, currency, stock, categoryId]
+      required: [id, name, description, price, currency, stock, categoryId]
       properties:
         id:
           type: string
@@ -413,9 +413,10 @@ components:
           example: Comet Catnip
         description:
           type: string
+          minLength: 1
           maxLength: 500
-          default: ''
-          description: Product description. Empty when no description is supplied.
+          pattern: '\S'
+          description: Product description. Must not be blank.
           example: Freeze-dried catnip grown in nutrient-rich comet dust.
         price:
           type: number
@@ -425,15 +426,16 @@ components:
           description: Product price with no more than 17 integer digits and 2 fractional digits.
           example: 8.49
         currency:
-          type: string
-          minLength: 3
-          maxLength: 3
-          pattern: '^[A-Z]{3}$'
-          description: ISO 4217 currency code.
-          example: USD
+            type: string
+            minLength: 3
+            maxLength: 3
+            pattern: '^[A-Z]{3}$'
+            description: ISO 4217 currency code.
+            example: USD
         stock:
           type: integer
           minimum: 0
+          maximum: 2147483647
           description: Available product quantity.
           example: 85
         categoryId:

@@ -28,14 +28,14 @@ public class Product {
     private Product(
             UUID id,
             @NonNull String name,
-            String description,
+            @NonNull String description,
             @NonNull Money price,
             @NonNull UUID categoryId,
             @NonNull Quantity stock
     ) {
         this.id = Objects.requireNonNullElseGet(id, UUID::randomUUID);
         this.name = validateName(name);
-        this.description = (description == null) ? "" : description.strip();
+        this.description = validateDescription(description);
         this.price = validatePrice(price);
         this.categoryId = categoryId;
         this.stock = stock;
@@ -67,6 +67,14 @@ public class Product {
             throw new ProductPriceMustBePositiveException();
         }
         return price;
+    }
+
+    private static String validateDescription(String description) {
+        String normalized = description.strip();
+        if (normalized.isBlank()) {
+            throw new IllegalArgumentException("Product description must not be blank");
+        }
+        return normalized;
     }
 
 }

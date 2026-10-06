@@ -13,6 +13,7 @@ public record ProductRequest(
         @CosmicWordCheck
         String name,
 
+        @NotBlank
         @Size(max = 500)
         String description,
 
@@ -31,8 +32,4 @@ public record ProductRequest(
 
         @NotNull
         UUID categoryId
-) {
-    public ProductRequest {
-        description = (description == null) ? "" : description;
-    }
-}
+) {}

@@ -28,6 +28,10 @@ spring:
     show-sql: true
     open-in-view: false
 
+logging:
+  level:
+    space.cosmocats.marketplace: DEBUG
+
 springdoc:
   api-docs:
     enabled: true

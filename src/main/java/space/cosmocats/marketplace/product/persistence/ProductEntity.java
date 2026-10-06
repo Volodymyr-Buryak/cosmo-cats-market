@@ -17,7 +17,10 @@ public class ProductEntity {
     @Setter(AccessLevel.NONE)
     private UUID id;
     private String name;
+
+    @Column(nullable = false, length = 500)
     private String description;
+
     private BigDecimal price;
     private String currency;
     private Integer stock;
@@ -34,7 +37,7 @@ public class ProductEntity {
         this.stock = stock;
         this.currency = currency;
         this.categoryIdRef = categoryIdRef;
-        this.description = Objects.requireNonNullElse(description, "");
+        this.description = description;
     }
 
     @Override
