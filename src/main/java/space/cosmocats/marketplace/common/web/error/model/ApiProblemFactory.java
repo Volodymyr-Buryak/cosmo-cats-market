@@ -2,8 +2,8 @@ package space.cosmocats.marketplace.common.web.error.model;
 
 import java.net.URI;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.context.MessageSource;
 import org.springframework.web.context.request.WebRequest;
