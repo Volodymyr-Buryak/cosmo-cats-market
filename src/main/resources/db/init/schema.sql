@@ -2,11 +2,11 @@ CREATE TABLE IF NOT EXISTS products
 (
     id              UUID PRIMARY KEY,
     name            VARCHAR(100)   NOT NULL,
-    description     VARCHAR(500),
+    description     VARCHAR(500)   NOT NULL DEFAULT '',
     price           DECIMAL(19, 2) NOT NULL,
     currency        VARCHAR(3)     NOT NULL,
     stock           INTEGER        NOT NULL,
-    category_id_ref     UUID           NOT NULL,
+    category_id_ref UUID           NOT NULL,
 
     CONSTRAINT chk_product_name_length CHECK (LENGTH(TRIM(name)) >= 3),
     CONSTRAINT chk_product_price CHECK (price > 0),

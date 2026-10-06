@@ -34,7 +34,7 @@ public class ProductEntity {
         this.stock = stock;
         this.currency = currency;
         this.categoryIdRef = categoryIdRef;
-        this.description = description;
+        this.description = Objects.requireNonNullElse(description, "");
     }
 
     @Override

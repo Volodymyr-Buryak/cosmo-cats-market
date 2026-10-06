@@ -6,6 +6,8 @@ import org.springframework.http.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.context.MessageSource;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.web.context.request.ServletWebRequest;
@@ -75,9 +77,7 @@ public class ApiProblemFactory {
                 .build();
     }
 
-    public ApiProblem validationError(
-            MethodArgumentNotValidException exception, List<ApiError> errors, WebRequest request
-    ) {
+    public ApiProblem validationError(MethodArgumentNotValidException exception, WebRequest request) {
         ProblemDetail problemDetail = exception.updateAndGetBody(messageSource, request.getLocale());
         problemDetail.setType(errorType("validation-error"));
 
@@ -85,9 +85,29 @@ public class ApiProblemFactory {
             problemDetail.setInstance(resolveRequestInstance(request));
         }
 
+        List<ApiError> errors = exception.getBindingResult()
+                .getAllErrors()
+                .stream()
+                .map(error -> toApiError(error, request))
+                .toList();
+
         return new ApiProblem(problemDetail, errors);
     }
 
+    private ApiError toApiError(ObjectError error, WebRequest request) {
+        String detail = messageSource.getMessage(error, request.getLocale());
+        String pointer = (error instanceof FieldError fieldError)
+                ? toJsonPointer(fieldError.getField())
+                : null;
+
+        return new ApiError(detail, pointer);
+    }
+
+    private static String toJsonPointer(String field) {
+        return "/" + field
+                .replace(".", "/")
+                .replaceAll("\\[(\\d+)\\]", "/$1");
+    }
 
     private static URI errorType(String type) {
         return URI.create(BASE_ERROR_URI + "/" + type);

@@ -31,4 +31,8 @@ public record ProductRequest(
 
         @NotNull
         UUID categoryId
-) {}
+) {
+    public ProductRequest {
+        description = (description == null) ? "" : description;
+    }
+}
