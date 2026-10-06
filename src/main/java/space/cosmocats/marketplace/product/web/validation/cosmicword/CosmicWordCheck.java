@@ -17,7 +17,7 @@ import java.lang.annotation.Documented;
 @Documented
 @Retention(RUNTIME)
 public @interface CosmicWordCheck {
-    String message() default "Value must contain one of the words: star, galaxy, comet";
+    String message() default "{validation.cosmic-word}";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }

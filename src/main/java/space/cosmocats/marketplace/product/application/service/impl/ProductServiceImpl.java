@@ -18,6 +18,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public PageResult<Product> getAllProducts(ProductCriteria criteria) {
         return productRepository.findAll(criteria);
     }
