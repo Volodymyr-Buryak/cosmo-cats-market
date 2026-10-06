@@ -16,203 +16,341 @@ tags:
 paths:
   /products:
     get:
-      tags: [Products]
+      tags:
+        - Products
       summary: Get a page of products
       description: Returns a page of products sorted by price.
       operationId: getAllProducts
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Size'
-        - $ref: '#/components/parameters/ProductSort'
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - in: query
+          name: page
+          description: Zero-based page index.
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          example: 0
+        - in: query
+          name: size
+          description: Number of products per page.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          example: 20
+        - in: query
+          name: sort
+          description: Product price sorting direction.
+          schema:
+            $ref: '#/components/schemas/ProductSort'
+
       responses:
         '200':
           description: The requested product page.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProductPageResponse'
+                $ref: '#/components/schemas/ProductPage'
               examples:
-                firstPage:
+                productPage:
                   $ref: '#/components/examples/ProductPage'
+
         '400':
-          $ref: '#/components/responses/ValidationError'
+          description: Request validation failed.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+              examples:
+                validationError:
+                  $ref: '#/components/examples/ValidationErrorResponse'
+
+        '500':
+          description: Unexpected server error.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                internalServerError:
+                  $ref: '#/components/examples/InternalServerError'
 
     post:
-      tags: [Products]
+      tags:
+        - Products
       summary: Create a product
-      description: Creates a product and returns the persisted representation.
+      description: Creates a product and returns its persisted representation.
       operationId: createProduct
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateProductRequest'
+              $ref: '#/components/schemas/Product'
             examples:
-              createProduct:
-                $ref: '#/components/examples/ProductRequest'
+              product:
+                $ref: '#/components/examples/CreateProduct'
+
       responses:
         '201':
           description: Product created successfully.
+          headers:
+            Location:
+              description: URI of the created product.
+              schema:
+                type: string
+                format: uri-reference
+              example: /marketplace/api/v1/products/10000000-0000-4000-8000-000000000002
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProductResponse'
-              examples:
-                createdProduct:
-                  $ref: '#/components/examples/Product'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-
-  /products/{id}:
-    parameters:
-      - $ref: '#/components/parameters/ProductId'
-
-    get:
-      tags: [Products]
-      summary: Get a product by ID
-      description: Returns one product with the requested identifier.
-      operationId: getProductById
-      responses:
-        '200':
-          description: Product found.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductResponse'
+                $ref: '#/components/schemas/Product'
               examples:
                 product:
                   $ref: '#/components/examples/Product'
+
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Request body is malformed or product validation failed.
+          content:
+            application/problem+json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/ValidationErrorResponse'
+                  - $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                validationError:
+                  $ref: '#/components/examples/ProductValidationErrorResponse'
+                malformedRequest:
+                  $ref: '#/components/examples/MalformedRequest'
+
+        '415':
+          description: Request media type is not supported.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                unsupportedMediaType:
+                  $ref: '#/components/examples/UnsupportedMediaType'
+
+        '500':
+          description: Unexpected server error.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                internalServerError:
+                  $ref: '#/components/examples/InternalServerError'
+
+  /products/{id}:
+    get:
+      tags:
+        - Products
+      summary: Get a product by ID
+      description: Returns a product with the requested identifier.
+      operationId: getProductById
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - in: path
+          name: id
+          required: true
+          description: Product identifier.
+          schema:
+            type: string
+            format: uuid
+          example: 10000000-0000-4000-8000-000000000002
+
+      responses:
+        '200':
+          description: The requested product.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+              examples:
+                product:
+                  $ref: '#/components/examples/Product'
+
+        '400':
+          description: Product identifier has an invalid format.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidProductId:
+                  $ref: '#/components/examples/InvalidProductId'
+
         '404':
-          $ref: '#/components/responses/ProductNotFound'
+          description: Product was not found.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                productNotFound:
+                  $ref: '#/components/examples/ProductNotFound'
+
+        '500':
+          description: Unexpected server error.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                internalServerError:
+                  $ref: '#/components/examples/InternalServerErrorById'
 
     put:
-      tags: [Products]
+      tags:
+        - Products
       summary: Update a product
       description: Replaces the editable fields of an existing product.
       operationId: updateProduct
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - in: path
+          name: id
+          required: true
+          description: Product identifier.
+          schema:
+            type: string
+            format: uuid
+          example: 10000000-0000-4000-8000-000000000002
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateProductRequest'
+              $ref: '#/components/schemas/Product'
             examples:
-              updateProduct:
-                $ref: '#/components/examples/ProductRequest'
+              product:
+                $ref: '#/components/examples/CreateProduct'
+
       responses:
         '200':
           description: Product updated successfully.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProductResponse'
+                $ref: '#/components/schemas/Product'
               examples:
-                updatedProduct:
+                product:
                   $ref: '#/components/examples/Product'
+
         '400':
-          $ref: '#/components/responses/ValidationError'
+          description: Product identifier, request body, or product fields are invalid.
+          content:
+            application/problem+json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/ValidationErrorResponse'
+                  - $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidProductId:
+                  $ref: '#/components/examples/InvalidProductId'
+                validationError:
+                  $ref: '#/components/examples/ProductUpdateValidationErrorResponse'
+                malformedRequest:
+                  $ref: '#/components/examples/MalformedUpdateRequest'
+
         '404':
-          $ref: '#/components/responses/ProductNotFound'
+          description: Product was not found.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                productNotFound:
+                  $ref: '#/components/examples/ProductNotFound'
+
+        '415':
+          description: Request media type is not supported.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                unsupportedMediaType:
+                  $ref: '#/components/examples/UnsupportedMediaTypeById'
+
+        '500':
+          description: Unexpected server error.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                internalServerError:
+                  $ref: '#/components/examples/InternalServerErrorById'
 
     delete:
-      tags: [Products]
+      tags:
+        - Products
       summary: Delete a product
       description: Permanently deletes a product by its identifier.
       operationId: deleteProduct
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - in: path
+          name: id
+          required: true
+          description: Product identifier.
+          schema:
+            type: string
+            format: uuid
+          example: 10000000-0000-4000-8000-000000000002
+
       responses:
         '204':
           description: Product deleted successfully. The response has no body.
+
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Product identifier has an invalid format.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidProductId:
+                  $ref: '#/components/examples/InvalidProductId'
+
         '404':
-          $ref: '#/components/responses/ProductNotFound'
+          description: Product was not found.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                productNotFound:
+                  $ref: '#/components/examples/ProductNotFound'
+
+        '500':
+          description: Unexpected server error.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                internalServerError:
+                  $ref: '#/components/examples/InternalServerErrorById'
 
 components:
   parameters:
-    ProductId:
-      name: id
-      in: path
-      required: true
-      description: Product identifier.
+    AcceptLanguage:
+      in: header
+      name: Accept-Language
+      required: false
+      description: Preferred language for human-readable error messages. Supported languages are English (`en`) and Ukrainian (`uk`). English is used by default.
       schema:
         type: string
-        format: uuid
-      example: 10000000-0000-4000-8000-000000000002
-
-    Page:
-      name: page
-      in: query
-      required: false
-      description: Zero-based page index.
-      schema:
-        type: integer
-        minimum: 0
-        default: 0
-      example: 0
-
-    Size:
-      name: size
-      in: query
-      required: false
-      description: Number of products per page.
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 100
-        default: 20
-      example: 20
-
-    ProductSort:
-      name: sort
-      in: query
-      required: false
-      description: Product price sorting direction.
-      schema:
-        $ref: '#/components/schemas/ProductSort'
-
-  responses:
-    ValidationError:
-      description: Request validation failed.
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ValidationProblem'
-          examples:
-            invalidProduct:
-              $ref: '#/components/examples/ValidationProblem'
-
-    BadRequest:
-      description: The request cannot be parsed or contains a value of an invalid type.
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-          examples:
-            invalidIdentifier:
-              value:
-                type: about:blank
-                title: Bad Request
-                status: 400
-                detail: Method parameter 'id' could not be converted to UUID.
-                instance: /marketplace/api/v1/products/not-a-uuid
-
-    ProductNotFound:
-      description: No product exists with the requested identifier.
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-          examples:
-            productNotFound:
-              value:
-                type: https://cosmo-cats.market/errors/not-found
-                title: Not Found
-                status: 404
-                detail: Product 00000000-0000-0000-0000-000000000000 was not found.
-                instance: /marketplace/api/v1/products/00000000-0000-0000-0000-000000000000
+        default: en
+      example: uk
 
   schemas:
     ProductSort:
@@ -222,145 +360,15 @@ components:
       default: PRICE_ASC
       example: PRICE_ASC
 
-    CreateProductRequest:
+    ProductPage:
       type: object
-      additionalProperties: false
-      required: [name, price, currency, stock, categoryId]
-      properties:
-        name:
-          type: string
-          minLength: 3
-          maxLength: 100
-          description: Product name. It must contain star, galaxy, or comet as a separate word.
-          example: Comet Catnip
-        description:
-          type: [string, 'null']
-          maxLength: 500
-          description: Optional product description.
-          example: Freeze-dried catnip grown in nutrient-rich comet dust.
-        price:
-          type: number
-          format: decimal
-          exclusiveMinimum: 0
-          multipleOf: 0.01
-          description: Product price in the specified currency.
-          example: 8.49
-        currency:
-          type: string
-          minLength: 3
-          maxLength: 3
-          pattern: '^[A-Z]{3}$'
-          description: ISO 4217 currency code.
-          example: USD
-        stock:
-          type: integer
-          minimum: 0
-          description: Available product quantity.
-          example: 85
-        categoryId:
-          type: string
-          format: uuid
-          description: Identifier of the product category.
-          example: 20000000-0000-4000-8000-000000000001
-
-    UpdateProductRequest:
-      type: object
-      additionalProperties: false
-      required: [name, price, currency, stock, categoryId]
-      properties:
-        name:
-          type: string
-          minLength: 3
-          maxLength: 100
-          description: Product name. It must contain star, galaxy, or comet as a separate word.
-          example: Comet Catnip
-        description:
-          type: [string, 'null']
-          maxLength: 500
-          description: Optional product description.
-          example: Freeze-dried catnip grown in nutrient-rich comet dust.
-        price:
-          type: number
-          format: decimal
-          exclusiveMinimum: 0
-          multipleOf: 0.01
-          description: Product price in the specified currency.
-          example: 8.49
-        currency:
-          type: string
-          minLength: 3
-          maxLength: 3
-          pattern: '^[A-Z]{3}$'
-          description: ISO 4217 currency code.
-          example: USD
-        stock:
-          type: integer
-          format: int32
-          minimum: 0
-          description: Available product quantity.
-          example: 85
-        categoryId:
-          type: string
-          format: uuid
-          description: Identifier of the product category.
-          example: 20000000-0000-4000-8000-000000000001
-
-    ProductResponse:
-      type: object
-      additionalProperties: false
-      required: [id, name, description, price, currency, stock, categoryId]
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Product identifier.
-          example: 10000000-0000-4000-8000-000000000002
-        name:
-          type: string
-          minLength: 3
-          maxLength: 100
-          description: Product name.
-          example: Comet Catnip
-        description:
-          type: string
-          maxLength: 500
-          description: Product description. Empty when no description was supplied.
-          example: Freeze-dried catnip grown in nutrient-rich comet dust.
-        price:
-          type: number
-          format: decimal
-          exclusiveMinimum: 0
-          multipleOf: 0.01
-          description: Product price.
-          example: 8.49
-        currency:
-          type: string
-          minLength: 3
-          maxLength: 3
-          pattern: '^[A-Z]{3}$'
-          description: ISO 4217 currency code.
-          example: USD
-        stock:
-          type: integer
-          minimum: 0
-          description: Available product quantity.
-          example: 85
-        categoryId:
-          type: string
-          format: uuid
-          description: Identifier of the product category.
-          example: 20000000-0000-4000-8000-000000000001
-
-    ProductPageResponse:
-      type: object
-      additionalProperties: false
       required: [content, hasContent, page, size, totalElements, totalPages]
       properties:
         content:
           type: array
           description: Products on the current page.
           items:
-            $ref: '#/components/schemas/ProductResponse'
+            $ref: '#/components/schemas/Product'
         hasContent:
           type: boolean
           description: Whether the current page contains any products.
@@ -387,35 +395,80 @@ components:
           description: Total number of pages.
           example: 1
 
-    Problem:
+    Product:
       type: object
-      description: Error response compliant with RFC 9457.
-      additionalProperties: true
-      required: [type, title, status, detail, instance]
+      required: [id, name, price, currency, stock, categoryId]
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Product identifier.
+          example: 10000000-0000-4000-8000-000000000002
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+          description: Product name containing one of the words star, galaxy, or comet.
+          example: Comet Catnip
+        description:
+          type: string
+          maxLength: 500
+          default: ''
+          description: Product description. Empty when no description is supplied.
+          example: Freeze-dried catnip grown in nutrient-rich comet dust.
+        price:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 99999999999999999.99
+          multipleOf: 0.01
+          description: Product price with no more than 17 integer digits and 2 fractional digits.
+          example: 8.49
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          pattern: '^[A-Z]{3}$'
+          description: ISO 4217 currency code.
+          example: USD
+        stock:
+          type: integer
+          minimum: 0
+          description: Available product quantity.
+          example: 85
+        categoryId:
+          type: string
+          format: uuid
+          description: Identifier of the product category.
+          example: 20000000-0000-4000-8000-000000000001
+
+    ErrorResponse:
+      type: object
+      description: Error response whose human-readable fields are localized according to the `Accept-Language` request header.
+      required: [title, status, detail, instance]
       properties:
         type:
           type: string
           format: uri-reference
-          description: URI identifying the problem type.
+          description: URI identifying the error type. When omitted, `about:blank` is implied.
         title:
           type: string
-          description: Short summary of the problem.
+          description: Short summary of the error.
         status:
           type: integer
           description: HTTP status code.
         detail:
           type: string
-          description: Human-readable explanation of the problem.
+          description: Localized human-readable explanation of the error.
         instance:
           type: string
           format: uri-reference
-          description: URI of the request that caused the problem.
+          description: URI of the request that caused the error.
 
-    ValidationProblem:
+    ValidationErrorResponse:
       allOf:
-        - $ref: '#/components/schemas/Problem'
+        - $ref: '#/components/schemas/ErrorResponse'
         - type: object
-          additionalProperties: true
           required: [errors]
           properties:
             errors:
@@ -423,16 +476,15 @@ components:
               minItems: 1
               description: Individual request validation errors.
               items:
-                $ref: '#/components/schemas/ApiError'
+                $ref: '#/components/schemas/Violation'
 
-    ApiError:
+    Violation:
       type: object
-      additionalProperties: false
       required: [detail]
       properties:
         detail:
           type: string
-          description: Description of the individual validation error.
+          description: Localized description of the individual validation error.
           example: Product price must be greater than zero.
         pointer:
           type: string
@@ -440,52 +492,150 @@ components:
           example: /price
 
   examples:
-    ProductRequest:
-      summary: Valid product request
-      value:
-        name: Comet Catnip
-        description: Freeze-dried catnip grown in nutrient-rich comet dust.
-        price: 8.49
-        currency: USD
-        stock: 85
-        categoryId: 20000000-0000-4000-8000-000000000001
+      CreateProduct:
+        summary: Valid product creation request
+        value:
+          name: Comet Catnip
+          description: Freeze-dried catnip grown in nutrient-rich comet dust.
+          price: 8.49
+          currency: USD
+          stock: 85
+          categoryId: 20000000-0000-4000-8000-000000000001
 
-    Product:
-      summary: Product response
-      value:
-        id: 10000000-0000-4000-8000-000000000002
-        name: Comet Catnip
-        description: Freeze-dried catnip grown in nutrient-rich comet dust.
-        price: 8.49
-        currency: USD
-        stock: 85
-        categoryId: 20000000-0000-4000-8000-000000000001
+      ProductPage:
+        summary: First product page
+        value:
+          content:
+            - id: 10000000-0000-4000-8000-000000000002
+              name: Comet Catnip
+              description: Freeze-dried catnip grown in nutrient-rich comet dust.
+              price: 8.49
+              currency: USD
+              stock: 85
+              categoryId: 20000000-0000-4000-8000-000000000001
+            - id: 10000000-0000-4000-8000-000000000003
+              name: Galaxy Tuna
+              description: Sustainably caught tuna from the Andromeda galaxy.
+              price: 12.99
+              currency: USD
+              stock: 50
+              categoryId: 20000000-0000-4000-8000-000000000002
+          hasContent: true
+          page: 0
+          size: 20
+          totalElements: 12
+          totalPages: 1
 
-    ProductPage:
-      summary: First product page
-      value:
-        content:
-          - id: 10000000-0000-4000-8000-000000000002
-            name: Comet Catnip
-            description: Freeze-dried catnip grown in nutrient-rich comet dust.
-            price: 8.49
-            currency: USD
-            stock: 85
-            categoryId: 20000000-0000-4000-8000-000000000001
-        hasContent: true
-        page: 0
-        size: 20
-        totalElements: 12
-        totalPages: 1
+      Product:
+        summary: Product response
+        value:
+          id: 10000000-0000-4000-8000-000000000002
+          name: Comet Catnip
+          description: Freeze-dried catnip grown in nutrient-rich comet dust.
+          price: 8.49
+          currency: USD
+          stock: 85
+          categoryId: 20000000-0000-4000-8000-000000000001
 
-    ValidationProblem:
-      summary: Invalid product fields
-      value:
-        type: https://cosmo-cats.market/errors/validation-error
-        title: Validation error
-        status: 400
-        detail: Validation failed for one or more fields. Please check your request parameters.
-        instance: /marketplace/api/v1/products
-        errors:
-          - detail: Product price must be greater than zero.
-            pointer: /price
+      ValidationErrorResponse:
+        summary: Invalid pagination parameters
+        value:
+          type: https://cosmo-cats.market/errors/validation-error
+          title: Validation error
+          status: 400
+          detail: Validation failed for one or more fields. Please check your request parameters.
+          instance: /marketplace/api/v1/products
+          errors:
+            - detail: must be greater than 0
+              pointer: /size
+
+      ProductValidationErrorResponse:
+        summary: Invalid product fields
+        value:
+          type: https://cosmo-cats.market/errors/validation-error
+          title: Validation error
+          status: 400
+          detail: Validation failed for one or more fields. Please check your request parameters.
+          instance: /marketplace/api/v1/products
+          errors:
+            - detail: must be greater than 0
+              pointer: /price
+
+      MalformedRequest:
+        summary: Malformed JSON request body
+        value:
+          title: Invalid request body
+          status: 400
+          detail: Request body is missing or malformed.
+          instance: /marketplace/api/v1/products
+
+      UnsupportedMediaType:
+        summary: Unsupported request media type
+        value:
+          title: Unsupported media type
+          status: 415
+          detail: Request media type is not supported.
+          instance: /marketplace/api/v1/products
+
+      InternalServerError:
+        summary: Unexpected server error
+        value:
+          type: https://cosmo-cats.market/errors/internal-server-error
+          title: Internal Server Error
+          status: 500
+          detail: An unexpected error occurred.
+          instance: /marketplace/api/v1/products
+
+      InvalidProductId:
+        summary: Invalid product identifier
+        value:
+          title: Bad Request
+          status: 400
+          detail: A request value has an invalid type.
+          instance: /marketplace/api/v1/products/not-a-uuid
+
+      ProductNotFound:
+        summary: Product was not found
+        value:
+          type: https://cosmo-cats.market/errors/not-found
+          title: Not Found
+          status: 404
+          detail: Product was not found.
+          instance: /marketplace/api/v1/products/00000000-0000-0000-0000-000000000000
+
+      ProductUpdateValidationErrorResponse:
+        summary: Invalid product fields
+        value:
+          type: https://cosmo-cats.market/errors/validation-error
+          title: Validation error
+          status: 400
+          detail: Validation failed for one or more fields. Please check your request parameters.
+          instance: /marketplace/api/v1/products/10000000-0000-4000-8000-000000000002
+          errors:
+            - detail: must be greater than 0
+              pointer: /price
+
+      MalformedUpdateRequest:
+        summary: Malformed JSON request body
+        value:
+          title: Invalid request body
+          status: 400
+          detail: Request body is missing or malformed.
+          instance: /marketplace/api/v1/products/10000000-0000-4000-8000-000000000002
+
+      UnsupportedMediaTypeById:
+        summary: Unsupported request media type
+        value:
+          title: Unsupported media type
+          status: 415
+          detail: Request media type is not supported.
+          instance: /marketplace/api/v1/products/10000000-0000-4000-8000-000000000002
+
+      InternalServerErrorById:
+        summary: Unexpected server error
+        value:
+          type: https://cosmo-cats.market/errors/internal-server-error
+          title: Internal Server Error
+          status: 500
+          detail: An unexpected error occurred.
+          instance: /marketplace/api/v1/products/10000000-0000-4000-8000-000000000002
