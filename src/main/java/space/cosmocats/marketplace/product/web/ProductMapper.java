@@ -15,7 +15,7 @@ import space.cosmocats.marketplace.product.domain.model.value.Quantity;
 import space.cosmocats.marketplace.product.web.dto.ProductPageResponse;
 import space.cosmocats.marketplace.product.domain.repository.ProductCriteria;
 
-@Mapper(componentModel = "spring")
+@Mapper
 public interface ProductMapper {
 
     @Mapping(target = "page", defaultValue = "0")
