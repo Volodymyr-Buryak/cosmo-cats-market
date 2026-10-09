@@ -18,20 +18,17 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
 
     @Override
-    @Transactional(readOnly = true)
     public PageResult<Product> getAllProducts(ProductCriteria criteria) {
         return productRepository.findAll(criteria);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Product getProductById(UUID id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
     }
 
     @Override
-    @Transactional
     public Product createProduct(Product product) {
         return productRepository.save(product);
     }
