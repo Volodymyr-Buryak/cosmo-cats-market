@@ -63,8 +63,10 @@ public class ProductRepositoryAdapter implements ProductRepository {
 
     private Sort toSort(ProductSort sort) {
         return switch (sort) {
-            case PRICE_ASC -> Sort.by(Sort.Direction.ASC, "price");
-            case PRICE_DESC -> Sort.by(Sort.Direction.DESC, "price");
+            case PRICE_ASC -> Sort.by(Sort.Direction.ASC, "price")
+                    .and(Sort.by(Sort.Direction.ASC, "id"));
+            case PRICE_DESC -> Sort.by(Sort.Direction.DESC, "price")
+                    .and(Sort.by(Sort.Direction.ASC, "id"));
         };
     }
 }

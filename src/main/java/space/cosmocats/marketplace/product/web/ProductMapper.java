@@ -15,7 +15,7 @@ import space.cosmocats.marketplace.product.domain.model.value.Quantity;
 import space.cosmocats.marketplace.product.web.dto.ProductPageResponse;
 import space.cosmocats.marketplace.product.domain.repository.ProductCriteria;
 
-@Mapper(componentModel = "spring")
+@Mapper
 public interface ProductMapper {
 
     @Mapping(target = "page", defaultValue = "0")
@@ -28,7 +28,6 @@ public interface ProductMapper {
     @Mapping(target = "currency", source = "price.currency.currencyCode")
     ProductResponse toResponse(Product product);
 
-    @Mapping(target = "hasContent", expression = "java(page.hasContent())")
     ProductPageResponse toPageResponse(PageResult<Product> page);
 
     @Mapping(target = "id", ignore = true)

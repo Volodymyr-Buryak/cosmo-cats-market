@@ -23,14 +23,12 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Product getProductById(UUID id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
     }
 
     @Override
-    @Transactional
     public Product createProduct(Product product) {
         return productRepository.save(product);
     }
