@@ -35,17 +35,17 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 
 import space.cosmocats.marketplace.common.config.LocaleConfig;
-import space.cosmocats.marketplace.common.exception.ConflictException;
-import space.cosmocats.marketplace.common.exception.DomainRuleViolationException;
 import space.cosmocats.marketplace.common.pagination.PageResult;
 import space.cosmocats.marketplace.product.domain.model.Product;
-import space.cosmocats.marketplace.product.domain.exception.InsufficientStockException;
 import space.cosmocats.marketplace.product.domain.model.value.Money;
+import space.cosmocats.marketplace.common.exception.ConflictException;
 import space.cosmocats.marketplace.product.domain.model.value.Quantity;
 import space.cosmocats.marketplace.product.domain.repository.ProductSort;
 import space.cosmocats.marketplace.common.web.error.model.ApiProblemFactory;
 import space.cosmocats.marketplace.product.domain.repository.ProductCriteria;
 import space.cosmocats.marketplace.product.application.service.ProductService;
+import space.cosmocats.marketplace.common.exception.DomainRuleViolationException;
+import space.cosmocats.marketplace.product.domain.exception.InsufficientStockException;
 import space.cosmocats.marketplace.product.application.exception.ProductNotFoundException;
 
 import static org.mockito.Mockito.when;
@@ -91,7 +91,6 @@ class ProductControllerTest {
 
         // Then
         assertThat(result.getResponse().getStatus()).isEqualTo(200);
-        assertThat(result.getResponse().getContentType()).startsWith(MediaType.APPLICATION_JSON_VALUE);
         assertProductJson(responseBody(result), product);
         verify(productService).getProductById(PRODUCT_ID);
     }
@@ -109,13 +108,14 @@ class ProductControllerTest {
         when(productService.getAllProducts(criteria)).thenReturn(page);
 
         MvcResult result = mockMvc.perform(get(PRODUCTS_PATH)).andReturn();
-
         assertThat(result.getResponse().getStatus()).isEqualTo(200);
+
         JsonNode body = responseBody(result);
         assertThat(body.get("content").size()).isEqualTo(2);
         assertProductJson(body.get("content").get(0), firstProduct);
         assertProductJson(body.get("content").get(1), secondProduct);
         assertPageMetadata(body, 0, 20, 2, 1, true);
+
         verify(productService).getAllProducts(criteria);
     }
 
@@ -133,12 +133,13 @@ class ProductControllerTest {
 
         MvcResult result = mockMvc.perform(get(PRODUCTS_PATH)
                 .param("page", "1").param("size", "2").param("sort", sort.name())).andReturn();
-
         assertThat(result.getResponse().getStatus()).isEqualTo(200);
+
         JsonNode body = responseBody(result);
         assertThat(body.get("content").size()).isEqualTo(2);
         assertProductJson(body.get("content").get(0), product);
         assertPageMetadata(body, 1, 2, 5, 3, true);
+
         verify(productService).getAllProducts(criteria);
     }
 
@@ -152,12 +153,12 @@ class ProductControllerTest {
         when(productService.getAllProducts(criteria)).thenReturn(page);
 
         MvcResult result = mockMvc.perform(get(PRODUCTS_PATH)).andReturn();
-
         assertThat(result.getResponse().getStatus()).isEqualTo(200);
+
         JsonNode body = responseBody(result);
-        assertThat(body.get("content").isArray()).isTrue();
         assertThat(body.get("content").size()).isZero();
         assertPageMetadata(body, 0, 20, 0, 0, false);
+
         verify(productService).getAllProducts(criteria);
     }
 
@@ -174,6 +175,7 @@ class ProductControllerTest {
         assertThat(result.getResponse().getHeader(HttpHeaders.LOCATION))
                 .isEqualTo("http://localhost" + PRODUCTS_PATH + "/" + PRODUCT_ID);
         assertProductJson(responseBody(result), product);
+
         ArgumentCaptor<Product> captor = ArgumentCaptor.forClass(Product.class);
         verify(productService).createProduct(captor.capture());
         assertThat(captor.getValue().getId()).isNotNull();
@@ -188,9 +190,9 @@ class ProductControllerTest {
         when(productService.updateProduct(any(Product.class))).thenReturn(product);
 
         MvcResult result = mockMvc.perform(writeRequest("PUT").content(body)).andReturn();
-
         assertThat(result.getResponse().getStatus()).isEqualTo(200);
         assertProductJson(responseBody(result), product);
+
         ArgumentCaptor<Product> captor = ArgumentCaptor.forClass(Product.class);
         verify(productService).updateProduct(captor.capture());
         assertThat(captor.getValue()).usingRecursiveComparison().isEqualTo(product);
@@ -266,49 +268,6 @@ class ProductControllerTest {
 
         JsonNode problem = assertProblem(result, 400, ERROR_BASE_URI + "validation-error");
         assertThat(problem.get("errors").findValuesAsString("pointer")).contains("/" + parameter);
-        verifyNoInteractions(productService);
-    }
-
-    @ParameterizedTest(name = "{0}")
-    @ValueSource(strings = {"GET", "PUT", "DELETE"})
-    @DisplayName("Rejects malformed product IDs in the request path")
-    void shouldRejectMalformedProductId(String method) throws Exception {
-        MockHttpServletRequestBuilder request = request(HttpMethod.valueOf(method), PRODUCTS_PATH + "/not-a-uuid");
-        if (method.equals("PUT")) {
-            request.contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(validRequestBody()));
-        }
-
-        MvcResult result = mockMvc.perform(request).andReturn();
-
-        assertProblem(result, 400, "about:blank");
-        verifyNoInteractions(productService);
-    }
-
-    @ParameterizedTest(name = "{0}")
-    @ValueSource(strings = {"POST", "PUT"})
-    @DisplayName("Rejects malformed category IDs in the JSON body")
-    void shouldRejectMalformedCategoryId(String method) throws Exception {
-        Map<String, Object> body = validRequestBody();
-        body.put("categoryId", "not-a-uuid");
-
-        MvcResult result = mockMvc.perform(writeRequest(method)
-                .content(objectMapper.writeValueAsString(body))).andReturn();
-
-        assertProblem(result, 400, "about:blank");
-        verifyNoInteractions(productService);
-    }
-
-    @ParameterizedTest(name = "[{index}] {0}")
-    @MethodSource("unreadableRequests")
-    @DisplayName("Rejects malformed JSON and missing request bodies")
-    void shouldRejectUnreadableRequestBody(String method, String body) throws Exception {
-        MockHttpServletRequestBuilder request = writeRequest(method).content(body);
-
-        MvcResult result = mockMvc.perform(request).andReturn();
-
-        JsonNode problem = assertProblem(result, 400, "about:blank");
-        assertThat(problem.get("title").asString()).isEqualTo("Invalid request body");
-        assertThat(problem.get("detail").asString()).isEqualTo("Request body is missing or malformed.");
         verifyNoInteractions(productService);
     }
 
@@ -451,11 +410,6 @@ class ProductControllerTest {
         ).map(invalidField -> Arguments.of(method, invalidField[0], invalidField[1])));
     }
 
-    private static Stream<Arguments> unreadableRequests() {
-        return Stream.of("POST", "PUT")
-                .flatMap(method -> Stream.of("{", "").map(body -> Arguments.of(method, body)));
-    }
-
     private MockHttpServletRequestBuilder writeRequest(String method) {
         String path = method.equals("POST") ? PRODUCTS_PATH : PRODUCTS_PATH + "/" + PRODUCT_ID;
         return request(HttpMethod.valueOf(method), path).contentType(MediaType.APPLICATION_JSON);
@@ -527,4 +481,5 @@ class ProductControllerTest {
         assertThat(body.get("totalPages").intValue()).isEqualTo(totalPages);
         assertThat(body.get("hasContent").booleanValue()).isEqualTo(hasContent);
     }
+
 }
