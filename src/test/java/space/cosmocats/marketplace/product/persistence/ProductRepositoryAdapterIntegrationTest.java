@@ -1,4 +1,4 @@
-package space.cosmocats.marketplace.product.integration.persistence;
+package space.cosmocats.marketplace.product.persistence;
 
 import java.util.UUID;
 import java.util.List;
@@ -28,7 +28,6 @@ import space.cosmocats.marketplace.product.domain.model.value.Quantity;
 import space.cosmocats.marketplace.product.domain.repository.ProductSort;
 import space.cosmocats.marketplace.product.domain.repository.ProductCriteria;
 
-import space.cosmocats.marketplace.product.persistence.ProductPersistenceMapperImpl;
 import space.cosmocats.marketplace.product.persistence.repository.JpaProductRepository;
 import space.cosmocats.marketplace.product.persistence.repository.ProductRepositoryAdapter;
 
