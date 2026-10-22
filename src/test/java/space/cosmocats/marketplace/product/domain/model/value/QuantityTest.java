@@ -16,14 +16,9 @@ class QuantityTest {
     @DisplayName("Accepts zero, positive values and the maximum integer value")
     @ValueSource(ints = {0, 1, Integer.MAX_VALUE})
     void shouldAcceptNonNegativeValue(int value) {
-        // Given
-        int expectedValue = value;
-
-        // When
         Quantity quantity = new Quantity(value);
 
-        // Then
-        assertThat(quantity.value()).isEqualTo(expectedValue);
+        assertThat(quantity.value()).isEqualTo(value);
     }
 
     @ParameterizedTest(name = "[{index}] value = {0}")
