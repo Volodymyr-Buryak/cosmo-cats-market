@@ -62,8 +62,8 @@ import static com.atlassian.oai.validator.mockmvc.OpenApiValidationMatchers.open
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
 
 @WebMvcTest(ProductController.class)
-@Import({ProductMapperImpl.class, ApiProblemFactory.class, LocaleConfig.class})
 @Isolated("Shares the mocked ProductService with other MVC tests")
+@Import({ProductMapperImpl.class, ApiProblemFactory.class, LocaleConfig.class})
 class ProductContractTest {
 
     private static final String API_BASE_PATH = "/api/v1";
