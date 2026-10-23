@@ -1,0 +1,77 @@
+import org.gradle.api.tasks.testing.TestResult.ResultType
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    javaLauncher = javaToolchains.launcherFor(java.toolchain)
+    jvmArgs "-javaagent:${configurations.mockitoAgent.asPath}"
+
+    def testType = name == 'integrationTest' ? 'Thin Integration Test' : 'Unit Test'
+    def testSummaryFile = layout.buildDirectory.file("reports/tests/${name}/test-summary.md").get().asFile
+
+    testLogging {
+        events TestLogEvent.FAILED, TestLogEvent.PASSED, TestLogEvent.SKIPPED
+        exceptionFormat = TestExceptionFormat.FULL
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+
+        debug {
+            events TestLogEvent.STARTED,
+                    TestLogEvent.FAILED,
+                    TestLogEvent.PASSED,
+                    TestLogEvent.SKIPPED,
+                    TestLogEvent.STANDARD_ERROR,
+                    TestLogEvent.STANDARD_OUT
+            exceptionFormat = TestExceptionFormat.FULL
+        }
+        info.events = debug.events
+        info.exceptionFormat = debug.exceptionFormat
+    }
+
+    addTestListener([
+        beforeSuite: { descriptor ->
+            if (!descriptor.parent) {
+                testSummaryFile.parentFile.mkdirs()
+                testSummaryFile.write("\n<details>\n<summary>${testType} Report Details</summary>\n")
+                testSummaryFile.append('<table><tr><th>Test Suite</th><th>Test Case</th><th>Test Result</th></tr>')
+            }
+        },
+        beforeTest: { descriptor -> },
+
+        afterTest: { descriptor, result ->
+            def testClass = descriptor.className.tokenize('.').last()
+            testSummaryFile.append("<tr><td>${testClass}</td><td>${descriptor.displayName}</td><td>${retrieveResultMarkdownSymbol(result.resultType)}</td></tr>\n")
+        },
+
+        afterSuite: { descriptor, result ->
+            if (!descriptor.parent) {
+                def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} passed, ${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
+                def border = '-' * (output.length() + 6)
+                println "\n${border}\n|  ${output}  |\n${border}"
+
+                testSummaryFile.append('</table>\n</details>')
+                testSummaryFile.append("\n\n## ${testType} Summary\n")
+                testSummaryFile.append('<table><tr><th>Test Result</th><th>Passed :green_circle:</th><th>Failed :x:</th><th>Skipped :warning:</th></tr>\n')
+                testSummaryFile.append("<tr><td>${result.resultType} ${retrieveResultMarkdownSymbol(result.resultType)}</td><td>${result.successfulTestCount}</td><td>${result.failedTestCount}</td><td>${result.skippedTestCount}</td></tr></table>")
+            }
+        }
+    ] as TestListener)
+}
+
+static String retrieveResultMarkdownSymbol(ResultType resultType) {
+    switch (resultType) {
+        case ResultType.FAILURE:
+            return ':x:'
+        case ResultType.SUCCESS:
+            return ':green_circle:'
+        case ResultType.SKIPPED:
+            return ':warning:'
+        default:
+            return 'UNKNOWN'
+    }
+}
+

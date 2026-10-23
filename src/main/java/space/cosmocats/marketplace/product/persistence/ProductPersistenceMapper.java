@@ -33,7 +33,7 @@ public interface ProductPersistenceMapper {
     void updateEntity(Product product, @MappingTarget ProductEntity entity);
 
     @Mapping(target = "page", source = "number")
-    @Mapping(target = "hasContent", expression = "java(page.hasContent())")
+    @Mapping(target = "hasContent", ignore = true)
     PageResult<Product> toPageResult(Page<ProductEntity> page);
 
     default Money toMoney(BigDecimal amount, String currency) {

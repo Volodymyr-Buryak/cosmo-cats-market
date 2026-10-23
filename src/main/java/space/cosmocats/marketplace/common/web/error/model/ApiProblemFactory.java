@@ -78,7 +78,7 @@ public class ApiProblemFactory {
     }
 
     public ApiProblem validationError(MethodArgumentNotValidException exception, WebRequest request) {
-        ProblemDetail problemDetail = exception.updateAndGetBody(messageSource, request.getLocale());
+        ProblemDetail problemDetail = exception.updateAndGetBody(messageSource, LocaleContextHolder.getLocale());
         problemDetail.setType(errorType("validation-error"));
 
         if (problemDetail.getInstance() == null) {
@@ -88,19 +88,21 @@ public class ApiProblemFactory {
         List<ApiError> errors = exception.getBindingResult()
                 .getAllErrors()
                 .stream()
-                .map(error -> toApiError(error, request))
+                .map(this::toApiError)
                 .toList();
 
         return new ApiProblem(problemDetail, errors);
     }
 
-    private ApiError toApiError(ObjectError error, WebRequest request) {
-        String detail = messageSource.getMessage(error, request.getLocale());
+    private ApiError toApiError(ObjectError error) {
         String pointer = (error instanceof FieldError fieldError)
                 ? toJsonPointer(fieldError.getField())
                 : null;
 
-        return new ApiError(detail, pointer);
+        return new ApiError(
+                localize(error),
+                pointer
+        );
     }
 
     private static String toJsonPointer(String field) {
@@ -118,6 +120,10 @@ public class ApiProblemFactory {
             return URI.create(servletRequest.getRequest().getRequestURI());
         }
         return null;
+    }
+
+    private String localize(ObjectError error) {
+        return messageSource.getMessage(error, LocaleContextHolder.getLocale());
     }
 
     private String localize(String messageKey, String defaultMessage, Object... arguments) {

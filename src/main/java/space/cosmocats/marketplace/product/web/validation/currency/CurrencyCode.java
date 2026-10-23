@@ -17,7 +17,7 @@ import java.lang.annotation.Documented;
 @Constraint(validatedBy = CurrencyCodeValidator.class)
 @Documented
 public @interface CurrencyCode {
-    String message() default "Invalid ISO 4217 currency code";
+    String message() default "{validation.currency-code}";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }

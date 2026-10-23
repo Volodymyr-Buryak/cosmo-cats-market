@@ -20,22 +20,28 @@ public final class Order {
     private final Instant createdAt;
     private OrderStatus status;
 
-    @Builder
     private Order(
             UUID id,
             @NonNull UUID buyerId,
             @NonNull List<OrderItem> items,
-            @NonNull Instant createdAt,
-            OrderStatus status
+            @NonNull Instant createdAt
     ) {
+        this.id = Objects.requireNonNullElseGet(id, UUID::randomUUID);
         this.buyerId = buyerId;
         this.createdAt = createdAt;
-
         this.items = checkAndCopyItems(items);
         this.total = calculateTotal(this.items);
+        this.status = OrderStatus.CREATED;
+    }
 
-        this.id = Objects.requireNonNullElseGet(id, UUID::randomUUID);
-        this.status = Objects.requireNonNullElse(status, OrderStatus.CREATED);
+    @Builder
+    public static Order create(UUID id, UUID buyerId, List<OrderItem> items, Instant createdAt) {
+        return new Order(
+                id,
+                buyerId,
+                items,
+                createdAt
+        );
     }
 
     private static List<OrderItem> checkAndCopyItems(List<OrderItem> items) {

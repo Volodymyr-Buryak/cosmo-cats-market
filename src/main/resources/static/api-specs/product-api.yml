@@ -409,14 +409,14 @@ components:
           type: string
           minLength: 3
           maxLength: 100
-          description: Product name containing one of the words star, galaxy, or comet.
+          description: Product name must contain one of the words `star`, `galaxy`, or `comet`. This rule is enforced by the server.
           example: Comet Catnip
         description:
           type: string
-          minLength: 1
+          minLength: 20
           maxLength: 500
           pattern: '\S'
-          description: Product description. Must not be blank.
+          description: Product description containing between 20 and 500 characters.
           example: Freeze-dried catnip grown in nutrient-rich comet dust.
         price:
           type: number
@@ -426,12 +426,12 @@ components:
           description: Product price with no more than 17 integer digits and 2 fractional digits.
           example: 8.49
         currency:
-            type: string
-            minLength: 3
-            maxLength: 3
-            pattern: '^[A-Z]{3}$'
-            description: ISO 4217 currency code.
-            example: USD
+          type: string
+          minLength: 3
+          maxLength: 3
+          pattern: '^[A-Z]{3}$'
+          description: ISO 4217 currency code. The server also validates that the currency code actually exists.
+          example: USD
         stock:
           type: integer
           minimum: 0
@@ -548,7 +548,7 @@ components:
           detail: Validation failed for one or more fields. Please check your request parameters.
           instance: /marketplace/api/v1/products
           errors:
-            - detail: must be greater than 0
+            - detail: Page size must be greater than zero.
               pointer: /size
 
       ProductValidationErrorResponse:
@@ -560,7 +560,7 @@ components:
           detail: Validation failed for one or more fields. Please check your request parameters.
           instance: /marketplace/api/v1/products
           errors:
-            - detail: must be greater than 0
+            - detail: Product price must be greater than zero.
               pointer: /price
 
       MalformedRequest:
@@ -591,7 +591,7 @@ components:
       InvalidProductId:
         summary: Invalid product identifier
         value:
-          title: Bad Request
+          title: Invalid request value
           status: 400
           detail: A request value has an invalid type.
           instance: /marketplace/api/v1/products/not-a-uuid
@@ -614,7 +614,7 @@ components:
           detail: Validation failed for one or more fields. Please check your request parameters.
           instance: /marketplace/api/v1/products/10000000-0000-4000-8000-000000000002
           errors:
-            - detail: must be greater than 0
+            - detail: Product price must be greater than zero.
               pointer: /price
 
       MalformedUpdateRequest:

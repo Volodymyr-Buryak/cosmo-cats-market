@@ -1,11 +1,8 @@
 package space.cosmocats.marketplace.common.pagination;
 
 import lombok.*;
-
 import java.util.List;
 import java.util.function.Function;
-
-import jakarta.validation.constraints.NotNull;
 
 @Builder
 public record PageResult<T>(
@@ -22,7 +19,7 @@ public record PageResult<T>(
         hasContent = !content.isEmpty();
     }
 
-    public <R> PageResult<R> map(@NotNull Function<? super T, R> converter) {
+    public <R> PageResult<R> map(@NonNull Function<? super T, R> converter) {
         return PageResult.<R>builder()
                 .content(
                         content.stream()
