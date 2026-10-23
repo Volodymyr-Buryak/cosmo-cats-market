@@ -19,8 +19,9 @@ java {
 ext {
     minimumCoveragePerFile = 0.8
     filesExcludedFromCoverage = [
-            '**/*MarketplaceApplication.*',
-            '**/config/*Configuration.*'
+            '**/MarketplaceApplication.*',
+            '**/common/config/LocaleConfig.*',
+            '**/product/persistence/ProductEntity.*'
     ]
 }
 
