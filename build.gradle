@@ -1,0 +1,83 @@
+import org.springframework.boot.gradle.plugin.SpringBootPlugin
+
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.1.1'
+    id 'org.barfuin.gradle.jacocolog' version '3.1.0'
+}
+
+group = 'space.cosmocats'
+version = '1.0.0'
+description = 'Backend for Cosmo Cats Intergalactic Marketplace'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+ext {
+    minimumCoveragePerFile = 0.8
+    filesExcludedFromCoverage = [
+            '**/MarketplaceApplication.*',
+            '**/common/config/LocaleConfig.*',
+            '**/product/persistence/ProductEntity.*'
+    ]
+}
+
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    mockitoAgent {
+        canBeConsumed = false
+    }
+}
+
+def mapstructVersion = '1.6.3'
+def openapiValidatorVersion = '3.0.0'
+def springBootBom = SpringBootPlugin.BOM_COORDINATES
+
+dependencies {
+    implementation platform(springBootBom)
+    annotationProcessor platform(springBootBom)
+    mockitoAgent platform(springBootBom)
+
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-h2console'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0'
+    implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+
+    runtimeOnly 'com.h2database:h2'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+    annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+    testImplementation "com.atlassian.oai:openapi-request-validator-mockmvc:${openapiValidatorVersion}"
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    mockitoAgent('org.mockito:mockito-core') {
+        transitive = false
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 25
+}
+
+tasks.named('compileJava', JavaCompile) {
+    options.compilerArgs.add('-Amapstruct.defaultComponentModel=spring')
+}
+
+apply from: "${rootProject.projectDir}/gradle/test.gradle"
+apply from: "${rootProject.projectDir}/gradle/jacoco.gradle"
