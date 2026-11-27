@@ -11,6 +11,6 @@ public record ProductPageResponse(
         int totalPages
 ) {
     public ProductPageResponse {
-        content = List.copyOf(content);
+        content = (content == null) ? List.of() : List.copyOf(content);
     }
 }

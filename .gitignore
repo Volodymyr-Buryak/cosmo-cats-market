@@ -12,6 +12,7 @@
 
 # Package Files #
 *.jar
+!gradle/wrapper/gradle-wrapper.jar
 *.war
 *.nar
 *.ear
@@ -29,11 +30,9 @@ replay_pid*
 *.ipr
 
 # Build output
-target/
+.gradle/
+build/
 out/
-
-# Local Maven settings
-.mvn/timing.properties
 
 # docs folder
 docs/

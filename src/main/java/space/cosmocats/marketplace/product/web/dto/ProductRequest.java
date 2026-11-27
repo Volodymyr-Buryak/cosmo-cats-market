@@ -2,7 +2,6 @@ package space.cosmocats.marketplace.product.web.dto;
 
 import java.util.UUID;
 import java.math.BigDecimal;
-
 import jakarta.validation.constraints.*;
 import space.cosmocats.marketplace.product.web.validation.currency.CurrencyCode;
 import space.cosmocats.marketplace.product.web.validation.cosmicword.CosmicWordCheck;
@@ -14,7 +13,7 @@ public record ProductRequest(
         String name,
 
         @NotBlank
-        @Size(max = 500)
+        @Size(min = 20, max = 500)
         String description,
 
         @NotNull

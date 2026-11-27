@@ -1,0 +1,662 @@
+openapi: 3.1.0
+
+info:
+  title: Cosmo Cats Order API
+  description: Order creation, retrieval, status transitions, and deletion in the Cosmo Cats marketplace.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8081/marketplace/api/v1
+    description: Local development server
+
+tags:
+  - name: Orders
+    description: Purchase snapshots and order lifecycle operations
+
+paths:
+  /orders:
+    get:
+      tags: [Orders]
+      summary: Get all orders
+      description: Returns all orders as an array sorted by creation time ascending, then order UUID ascending. This endpoint is not paginated. An empty collection is returned as an empty array.
+      operationId: getAllOrders
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: All stored orders.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderResponse'
+              examples:
+                orders:
+                  $ref: '#/components/examples/Orders'
+                emptyOrders:
+                  $ref: '#/components/examples/EmptyOrders'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags: [Orders]
+      summary: Create an order
+      description: >-
+        Creates an order in CREATED status with a server-generated UUID and UTC creation time.
+        Product names and prices are copied from the current catalogue into immutable purchase snapshots.
+        The total is the sum of unit price multiplied by quantity for every item. All items must use the same currency.
+        Repeated product identifiers are accepted as separate lines. This operation does not reserve or decrement stock,
+        check available stock, or validate the buyer against a user repository. A missing product returns 404;
+        conflicting persisted references or data return 409. Mixed currencies currently cause an unexpected server error.
+      operationId: createOrder
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+            examples:
+              createOrder:
+                $ref: '#/components/examples/CreateOrder'
+      responses:
+        '201':
+          description: Order created successfully.
+          headers:
+            Location:
+              description: URI of the created order.
+              schema:
+                type: string
+                format: uri-reference
+              example: http://localhost:8081/marketplace/api/v1/orders/30000000-0000-4000-8000-000000000001
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+              examples:
+                createdOrder:
+                  $ref: '#/components/examples/Order'
+        '400':
+          description: Required fields or item constraints are invalid, or the JSON body is missing or malformed.
+          content:
+            application/problem+json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/ValidationErrorResponse'
+                  - $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidQuantity:
+                  $ref: '#/components/examples/OrderValidationError'
+                malformedBody:
+                  $ref: '#/components/examples/MalformedCreateRequest'
+        '404':
+          description: A referenced product was not found.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                productNotFound:
+                  $ref: '#/components/examples/ProductNotFound'
+        '409':
+          description: Creation conflicts with stored data, including a referenced product disappearing before persistence.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                orderConflict:
+                  $ref: '#/components/examples/CreateConflict'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /orders/{id}:
+    parameters:
+      - $ref: '#/components/parameters/OrderId'
+      - $ref: '#/components/parameters/AcceptLanguage'
+    get:
+      tags: [Orders]
+      summary: Get an order by ID
+      description: Returns the order with its original purchase snapshots and current lifecycle status.
+      operationId: getOrderById
+      responses:
+        '200':
+          $ref: '#/components/responses/OrderFound'
+        '400':
+          $ref: '#/components/responses/InvalidOrderId'
+        '404':
+          $ref: '#/components/responses/OrderNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags: [Orders]
+      summary: Delete an order
+      description: Permanently deletes an order and its items. Only CREATED or CANCELLED orders may be deleted; PAID, SHIPPED, and DELIVERED orders return 409. An unknown or already deleted order returns 404.
+      operationId: deleteOrder
+      responses:
+        '204':
+          description: Order deleted successfully. The response has no body.
+        '400':
+          $ref: '#/components/responses/InvalidOrderId'
+        '404':
+          $ref: '#/components/responses/OrderNotFound'
+        '409':
+          description: The current order status does not allow deletion.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                deletionConflict:
+                  $ref: '#/components/examples/DeleteConflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /orders/{id}/status:
+    patch:
+      tags: [Orders]
+      summary: Update an order status
+      description: >-
+        Allows CREATED to PAID, PAID to SHIPPED, SHIPPED to DELIVERED, and CREATED or PAID to CANCELLED.
+        Requesting the current status succeeds without a state change, including CREATED, DELIVERED, and CANCELLED.
+        Requesting CREATED from another status returns 409. Every other disallowed transition returns 422.
+        DELIVERED and CANCELLED are terminal statuses. Purchase details remain immutable.
+      operationId: updateStatus
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+        - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderStatusRequest'
+            examples:
+              markAsPaid:
+                $ref: '#/components/examples/MarkAsPaid'
+              cancelOrder:
+                $ref: '#/components/examples/CancelOrder'
+      responses:
+        '200':
+          description: Order with its updated or unchanged status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+              examples:
+                paidOrder:
+                  $ref: '#/components/examples/PaidOrder'
+        '400':
+          description: Invalid order identifier, missing status, malformed body, or unrecognized status enum value.
+          content:
+            application/problem+json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/ValidationErrorResponse'
+                  - $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidOrderId:
+                  $ref: '#/components/examples/InvalidStatusOrderId'
+                missingStatus:
+                  $ref: '#/components/examples/StatusValidationError'
+                malformedBody:
+                  $ref: '#/components/examples/MalformedStatusRequest'
+        '404':
+          description: Order was not found.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                orderNotFound:
+                  $ref: '#/components/examples/StatusOrderNotFound'
+        '409':
+          description: An existing order cannot be reset to CREATED from another status.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                statusConflict:
+                  $ref: '#/components/examples/StatusConflict'
+        '422':
+          description: The requested status transition violates the order lifecycle rules.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidTransition:
+                  $ref: '#/components/examples/InvalidTransition'
+        '415':
+          $ref: '#/components/responses/UnsupportedStatusMediaType'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  parameters:
+    AcceptLanguage:
+      in: header
+      name: Accept-Language
+      required: false
+      description: Preferred language for human-readable error messages. Supported languages are English (`en`) and Ukrainian (`uk`). English is used by default.
+      schema:
+        type: string
+        default: en
+      example: uk
+    OrderId:
+      in: path
+      name: id
+      required: true
+      description: Order identifier.
+      schema:
+        type: string
+        format: uuid
+      example: 30000000-0000-4000-8000-000000000001
+
+  responses:
+    OrderFound:
+      description: The requested order.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/OrderResponse'
+          examples:
+            order:
+              $ref: '#/components/examples/Order'
+    InvalidOrderId:
+      description: Order identifier has an invalid UUID format.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            invalidOrderId:
+              $ref: '#/components/examples/InvalidOrderId'
+    OrderNotFound:
+      description: Order was not found.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            orderNotFound:
+              $ref: '#/components/examples/OrderNotFound'
+    UnsupportedMediaType:
+      description: Request media type is not supported.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unsupportedMediaType:
+              $ref: '#/components/examples/UnsupportedMediaType'
+    UnsupportedStatusMediaType:
+      description: Request media type is not supported.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unsupportedMediaType:
+              $ref: '#/components/examples/UnsupportedStatusMediaType'
+    InternalServerError:
+      description: Unexpected server error. The instance identifies the actual failing request URI.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internalServerError:
+              $ref: '#/components/examples/InternalServerError'
+
+  schemas:
+    OrderRequest:
+      type: object
+      required: [buyerId, items]
+      properties:
+        buyerId:
+          type: string
+          format: uuid
+          description: Buyer identifier, supplied by the caller. No user lookup is performed.
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: Non-null item lines, preserved in request order; repeated product IDs are allowed.
+          items:
+            $ref: '#/components/schemas/OrderItemRequest'
+    OrderItemRequest:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId:
+          type: string
+          format: uuid
+          description: Identifier of an existing catalogue product.
+        quantity:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 2147483647
+          description: Positive Java Integer quantity; not checked against stock.
+          example: 2
+    OrderStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+    OrderStatus:
+      type: string
+      enum: [CREATED, PAID, SHIPPED, DELIVERED, CANCELLED]
+      description: Current or requested order lifecycle status. Valid transitions are described on the PATCH operation.
+      example: CREATED
+    OrderResponse:
+      type: object
+      readOnly: true
+      required: [id, buyerId, createdAt, status, items, total, currency]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Server-generated order identifier.
+        buyerId:
+          type: string
+          format: uuid
+          description: Buyer identifier captured at creation.
+        createdAt:
+          type: string
+          format: date-time
+          description: Server-generated creation instant in UTC.
+          example: '2026-11-25T10:15:30Z'
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        items:
+          type: array
+          minItems: 1
+          description: Original item snapshots in their original line order.
+          items:
+            $ref: '#/components/schemas/OrderItemResponse'
+        total:
+          type: number
+          exclusiveMinimum: 0
+          description: Exact BigDecimal sum of every unitPrice multiplied by quantity. This response contract imposes no fixed two-decimal scale or product-price maximum on the total.
+          example: 16.98
+        currency:
+          $ref: '#/components/schemas/Currency'
+    OrderItemResponse:
+      type: object
+      readOnly: true
+      required: [productId, productName, unitPrice, currency, quantity]
+      properties:
+        productId:
+          type: string
+          format: uuid
+          description: Product identifier captured at purchase.
+        productName:
+          type: string
+          description: Product name snapshot; subsequent catalogue renames do not change it.
+          example: Comet Catnip
+        unitPrice:
+          type: number
+          exclusiveMinimum: 0
+          description: Exact BigDecimal unit price snapshot. No fixed fractional scale is imposed by this response DTO.
+          example: 8.49
+        currency:
+          $ref: '#/components/schemas/Currency'
+        quantity:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 2147483647
+          description: Purchased quantity for this item line.
+    Currency:
+      type: string
+      minLength: 3
+      maxLength: 3
+      pattern: '^[A-Z]{3}$'
+      description: ISO 4217 currency code. Every order item and the order total use the same currency.
+      example: USD
+    ErrorResponse:
+      type: object
+      description: Problem details; human-readable text is localized according to Accept-Language.
+      required: [title, status, detail, instance]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+          description: Error type URI. When omitted, about:blank is implied.
+        title:
+          type: string
+          description: Short error summary.
+        status:
+          type: integer
+          description: HTTP status code.
+        detail:
+          type: string
+          description: Localized explanation of the failure.
+        instance:
+          type: string
+          format: uri-reference
+          description: URI of the request that caused the failure.
+    ValidationErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          required: [errors]
+          properties:
+            errors:
+              type: array
+              minItems: 1
+              description: Individual request validation failures.
+              items:
+                $ref: '#/components/schemas/Violation'
+    Violation:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: string
+          description: Localized validation message.
+        pointer:
+          type: string
+          description: JSON Pointer-like path to the invalid field, when available.
+          example: /items/0/quantity
+
+  examples:
+    CreateOrder:
+      summary: Order two units of a product
+      value:
+        buyerId: 40000000-0000-4000-8000-000000000001
+        items:
+          - productId: 10000000-0000-4000-8000-000000000002
+            quantity: 2
+    MarkAsPaid:
+      summary: Pay a CREATED order
+      value:
+        status: PAID
+    CancelOrder:
+      summary: Cancel a CREATED or PAID order
+      value:
+        status: CANCELLED
+    Order:
+      summary: Newly created order with purchase snapshots
+      value:
+        id: 30000000-0000-4000-8000-000000000001
+        buyerId: 40000000-0000-4000-8000-000000000001
+        createdAt: '2026-11-25T10:15:30Z'
+        status: CREATED
+        items:
+          - productId: 10000000-0000-4000-8000-000000000002
+            productName: Comet Catnip
+            unitPrice: 8.49
+            currency: USD
+            quantity: 2
+        total: 16.98
+        currency: USD
+    PaidOrder:
+      summary: Order after payment
+      value:
+        id: 30000000-0000-4000-8000-000000000001
+        buyerId: 40000000-0000-4000-8000-000000000001
+        createdAt: '2026-11-25T10:15:30Z'
+        status: PAID
+        items:
+          - productId: 10000000-0000-4000-8000-000000000002
+            productName: Comet Catnip
+            unitPrice: 8.49
+            currency: USD
+            quantity: 2
+        total: 16.98
+        currency: USD
+    Orders:
+      summary: All stored orders
+      value:
+        - id: 30000000-0000-4000-8000-000000000001
+          buyerId: 40000000-0000-4000-8000-000000000001
+          createdAt: '2026-11-25T10:15:30Z'
+          status: CREATED
+          items:
+            - productId: 10000000-0000-4000-8000-000000000002
+              productName: Comet Catnip
+              unitPrice: 8.49
+              currency: USD
+              quantity: 2
+          total: 16.98
+          currency: USD
+    EmptyOrders:
+      summary: No stored orders
+      value: []
+    OrderValidationError:
+      summary: Nonpositive item quantity
+      value:
+        type: https://cosmo-cats.market/errors/validation-error
+        title: Validation error
+        status: 400
+        detail: Validation failed for one or more fields. Please check your request parameters.
+        instance: /marketplace/api/v1/orders
+        errors:
+          - detail: must be greater than 0
+            pointer: /items/0/quantity
+    StatusValidationError:
+      summary: Missing required status
+      value:
+        type: https://cosmo-cats.market/errors/validation-error
+        title: Validation error
+        status: 400
+        detail: Validation failed for one or more fields. Please check your request parameters.
+        instance: /marketplace/api/v1/orders/30000000-0000-4000-8000-000000000001/status
+        errors:
+          - detail: must not be null
+            pointer: /status
+    MalformedCreateRequest:
+      summary: Missing or malformed creation body
+      value:
+        title: Invalid request body
+        status: 400
+        detail: Request body is missing or malformed.
+        instance: /marketplace/api/v1/orders
+    MalformedStatusRequest:
+      summary: Malformed JSON or unknown status enum value
+      value:
+        title: Invalid request body
+        status: 400
+        detail: Request body is missing or malformed.
+        instance: /marketplace/api/v1/orders/30000000-0000-4000-8000-000000000001/status
+    InvalidOrderId:
+      summary: Invalid UUID in order path
+      value:
+        title: Invalid request value
+        status: 400
+        detail: A request value has an invalid type.
+        instance: /marketplace/api/v1/orders/not-a-uuid
+    InvalidStatusOrderId:
+      summary: Invalid UUID in status path
+      value:
+        title: Invalid request value
+        status: 400
+        detail: A request value has an invalid type.
+        instance: /marketplace/api/v1/orders/not-a-uuid/status
+    ProductNotFound:
+      summary: Referenced catalogue product does not exist
+      value:
+        type: https://cosmo-cats.market/errors/not-found
+        title: Not Found
+        status: 404
+        detail: Product was not found.
+        instance: /marketplace/api/v1/orders
+    OrderNotFound:
+      summary: Order does not exist
+      value:
+        type: https://cosmo-cats.market/errors/not-found
+        title: Not Found
+        status: 404
+        detail: Order was not found.
+        instance: /marketplace/api/v1/orders/30000000-0000-4000-8000-000000000001
+    StatusOrderNotFound:
+      summary: Requested status update refers to an unknown order
+      value:
+        type: https://cosmo-cats.market/errors/not-found
+        title: Not Found
+        status: 404
+        detail: Order was not found.
+        instance: /marketplace/api/v1/orders/30000000-0000-4000-8000-000000000001/status
+    CreateConflict:
+      summary: Persisting the order conflicts with existing data
+      value:
+        type: https://cosmo-cats.market/errors/conflict
+        title: Conflict
+        status: 409
+        detail: The order conflicts with existing data, references a missing product, or cannot be changed in its current state.
+        instance: /marketplace/api/v1/orders
+    DeleteConflict:
+      summary: A PAID order cannot be deleted
+      value:
+        type: https://cosmo-cats.market/errors/conflict
+        title: Conflict
+        status: 409
+        detail: The order conflicts with existing data, references a missing product, or cannot be changed in its current state.
+        instance: /marketplace/api/v1/orders/30000000-0000-4000-8000-000000000001
+    StatusConflict:
+      summary: An order cannot be reset to CREATED
+      value:
+        type: https://cosmo-cats.market/errors/conflict
+        title: Conflict
+        status: 409
+        detail: The order conflicts with existing data, references a missing product, or cannot be changed in its current state.
+        instance: /marketplace/api/v1/orders/30000000-0000-4000-8000-000000000001/status
+    InvalidTransition:
+      summary: Shipping an unpaid order violates lifecycle rules
+      value:
+        type: https://cosmo-cats.market/errors/domain-rule-violation
+        title: Domain rule violation
+        status: 422
+        detail: Order cannot transition from CREATED to SHIPPED.
+        instance: /marketplace/api/v1/orders/30000000-0000-4000-8000-000000000001/status
+    UnsupportedMediaType:
+      summary: Unsupported creation request media type
+      value:
+        title: Unsupported media type
+        status: 415
+        detail: Request media type is not supported.
+        instance: /marketplace/api/v1/orders
+    UnsupportedStatusMediaType:
+      summary: Unsupported status request media type
+      value:
+        title: Unsupported media type
+        status: 415
+        detail: Request media type is not supported.
+        instance: /marketplace/api/v1/orders/30000000-0000-4000-8000-000000000001/status
+    InternalServerError:
+      summary: Unexpected server error
+      value:
+        type: https://cosmo-cats.market/errors/internal-server-error
+        title: Internal Server Error
+        status: 500
+        detail: An unexpected error occurred.
+        instance: /marketplace/api/v1/orders

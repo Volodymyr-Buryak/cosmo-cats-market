@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+
+  sql:
+    init:
+      mode: never
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-test.yaml
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false

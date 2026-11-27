@@ -1,0 +1,212 @@
+openapi: 3.1.0
+
+info:
+  title: Cosmo Cats Report API
+  description: Product sales reporting for the Cosmo Cats intergalactic marketplace.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8081/marketplace/api/v1
+    description: Local development server
+
+tags:
+  - name: Reports
+    description: Aggregated order reports
+
+paths:
+  /reports/popular-products:
+    get:
+      tags: [Reports]
+      summary: Get the most popular purchased products
+      description: >-
+        Sums item quantities per product across orders whose current status is PAID, SHIPPED, or DELIVERED.
+        CREATED and CANCELLED orders are excluded. Results use the current catalogue product name, rather than
+        the name captured in an order item snapshot. Products are ranked by total quantity sold descending,
+        with product UUID ascending as the deterministic tie-breaker. The report covers all stored orders,
+        has no date filter or pagination, and returns at most limit entries. An empty array means no qualifying sales.
+      operationId: getPopularProducts
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Ranked products with their aggregated quantities; the array can contain fewer entries than the requested limit.
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 100
+                items:
+                  $ref: '#/components/schemas/PopularProductResponse'
+              examples:
+                popularProducts:
+                  $ref: '#/components/examples/PopularProducts'
+                emptyReport:
+                  $ref: '#/components/examples/EmptyReport'
+        '400':
+          description: Limit is outside 1 through 100, cannot be bound to a Java Integer, or is otherwise invalid.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+              examples:
+                invalidLimit:
+                  $ref: '#/components/examples/InvalidLimit'
+                malformedLimit:
+                  $ref: '#/components/examples/MalformedLimit'
+        '500':
+          description: Unexpected server error.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                internalServerError:
+                  $ref: '#/components/examples/InternalServerError'
+
+components:
+  parameters:
+    AcceptLanguage:
+      in: header
+      name: Accept-Language
+      required: false
+      description: Preferred language for human-readable error messages. Supported languages are English (`en`) and Ukrainian (`uk`). English is used by default.
+      schema:
+        type: string
+        default: en
+      example: uk
+    Limit:
+      in: query
+      name: limit
+      required: false
+      description: Maximum number of ranked products to return. Omitting this parameter uses 10.
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 100
+        default: 10
+      examples:
+        defaultLimit:
+          summary: Default report size
+          value: 10
+        topThree:
+          summary: Return up to three products
+          value: 3
+
+  schemas:
+    PopularProductResponse:
+      type: object
+      readOnly: true
+      required: [productId, productName, quantitySold]
+      properties:
+        productId:
+          type: string
+          format: uuid
+          description: Catalogue product identifier; also used ascending to break equal-quantity ties.
+          example: 10000000-0000-4000-8000-000000000002
+        productName:
+          type: string
+          description: Current catalogue product name, which can differ from historical order item names.
+          example: Comet Catnip
+        quantitySold:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 9223372036854775807
+          description: Sum of ordered units for this product in PAID, SHIPPED, and DELIVERED orders, represented as a Java long. This is not an order count or a revenue amount.
+          example: 25
+    ErrorResponse:
+      type: object
+      description: Problem details; human-readable text is localized according to Accept-Language.
+      required: [title, status, detail, instance]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+          description: Error type URI. When omitted, about:blank is implied.
+        title:
+          type: string
+          description: Short error summary.
+        status:
+          type: integer
+          description: HTTP status code.
+        detail:
+          type: string
+          description: Localized explanation of the failure.
+        instance:
+          type: string
+          format: uri-reference
+          description: URI of the request that caused the failure.
+    ValidationErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          required: [errors]
+          properties:
+            errors:
+              type: array
+              minItems: 1
+              description: Individual query parameter binding or validation failures.
+              items:
+                $ref: '#/components/schemas/Violation'
+    Violation:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: string
+          description: Localized validation or binding message.
+        pointer:
+          type: string
+          description: JSON Pointer-like path to the invalid parameter, when available.
+          example: /limit
+
+  examples:
+    PopularProducts:
+      summary: Products ranked by units sold with a UUID tie-breaker
+      value:
+        - productId: 10000000-0000-4000-8000-000000000002
+          productName: Comet Catnip
+          quantitySold: 25
+        - productId: 10000000-0000-4000-8000-000000000003
+          productName: Galaxy Tuna
+          quantitySold: 25
+        - productId: 10000000-0000-4000-8000-000000000004
+          productName: Star Feather Wand
+          quantitySold: 12
+    EmptyReport:
+      summary: No products in qualifying orders
+      value: []
+    InvalidLimit:
+      summary: Limit is below the minimum
+      value:
+        type: https://cosmo-cats.market/errors/validation-error
+        title: Validation error
+        status: 400
+        detail: Validation failed for one or more fields. Please check your request parameters.
+        instance: /marketplace/api/v1/reports/popular-products
+        errors:
+          - detail: must be greater than or equal to 1
+            pointer: /limit
+    MalformedLimit:
+      summary: Limit cannot be converted to an Integer
+      description: Binding failures use the validation problem structure; the exact conversion detail is supplied by Spring.
+      value:
+        type: https://cosmo-cats.market/errors/validation-error
+        title: Validation error
+        status: 400
+        detail: Validation failed for one or more fields. Please check your request parameters.
+        instance: /marketplace/api/v1/reports/popular-products
+        errors:
+          - detail: >-
+              Failed to convert property value of type 'java.lang.String' to required type 'java.lang.Integer' for property 'limit'; For input string: "abc"
+            pointer: /limit
+    InternalServerError:
+      summary: Unexpected server error
+      value:
+        type: https://cosmo-cats.market/errors/internal-server-error
+        title: Internal Server Error
+        status: 500
+        detail: An unexpected error occurred.
+        instance: /marketplace/api/v1/reports/popular-products
