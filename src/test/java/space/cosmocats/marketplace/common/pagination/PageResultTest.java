@@ -18,13 +18,10 @@ class PageResultTest {
     @Test
     @DisplayName("Preserves content and pagination metadata and calculates hasContent")
     void shouldPreserveContentAndPaginationMetadata() {
-        // Given
         List<String> content = List.of("star", "galaxy", "comet");
 
-        // When
         PageResult<String> page = new PageResult<>(content, 2, 3, 10L, 4, false);
 
-        // Then
         assertThat(page.content()).containsExactly("star", "galaxy", "comet");
         assertThat(page.page()).isEqualTo(2);
         assertThat(page.size()).isEqualTo(3);

@@ -8,7 +8,9 @@ jacoco {
 def integrationTestTask = tasks.register('integrationTest', Test) {
     group = 'verification'
     description = 'Runs thin integration tests'
-    maxParallelForks = 4
+    // Integration classes share one Testcontainers PostgreSQL instance.
+    maxParallelForks = 1
+    systemProperty 'junit.jupiter.execution.parallel.mode.classes.default', 'same_thread'
     filter {
         includeTestsMatching '*IT'
         includeTestsMatching '*IntegrationTest'
