@@ -4,12 +4,14 @@ import java.util.List;
 import java.util.UUID;
 import java.util.Optional;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import space.cosmocats.marketplace.order.domain.model.OrderStatus;
 import space.cosmocats.marketplace.order.persistence.entity.OrderEntity;
 
 public interface JpaOrderRepository extends JpaRepository<OrderEntity, UUID> {
@@ -30,8 +32,7 @@ public interface JpaOrderRepository extends JpaRepository<OrderEntity, UUID> {
             order by sum(i.quantity) desc, i.productId asc
             """)
     List<PopularProductProjection> findPopularProducts(
-            @Param("statuses") java.util.Set<space.cosmocats.marketplace.order.domain.model.OrderStatus> statuses,
-            org.springframework.data.domain.Pageable pageable);
+            @Param("statuses") java.util.Set<OrderStatus> statuses, Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select o from OrderEntity o where o.id = :id")
