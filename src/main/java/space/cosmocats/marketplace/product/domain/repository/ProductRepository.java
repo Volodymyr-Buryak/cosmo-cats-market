@@ -6,6 +6,7 @@ import space.cosmocats.marketplace.product.domain.model.Product;
 import space.cosmocats.marketplace.common.pagination.PageResult;
 
 public interface ProductRepository {
+    boolean existsByCategoryIdAndNameAndIdNot(UUID categoryId, String name, UUID id);
     boolean deleteById(UUID id);
     Product save(Product product);
     Optional<Product> findById(UUID id);

@@ -39,14 +39,11 @@ class OrderTest {
     @Test
     @DisplayName("Creates an order with the provided data and CREATED status")
     void shouldCreateOrderWithProvidedDataAndCreatedStatus() {
-        // Given
         OrderItem item = orderItem(PRODUCT_ID, "12.50", 2);
         var builder = validOrderBuilder().id(ORDER_ID).items(List.of(item));
 
-        // When
         Order order = builder.build();
 
-        // Then
         assertThat(order.getId()).isEqualTo(ORDER_ID);
         assertThat(order.getBuyerId()).isEqualTo(BUYER_ID);
         assertThat(order.getCreatedAt()).isEqualTo(CREATED_AT);

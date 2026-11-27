@@ -31,14 +31,11 @@ class ProductTest {
     @Test
     @DisplayName("Preserves the provided product ID")
     void shouldPreserveProvidedId() {
-        // Given
         UUID expectedId = UUID.fromString("00000000-0000-0000-0000-000000000002");
         var builder = validProductBuilder().id(expectedId);
 
-        // When
         Product product = builder.build();
 
-        // Then
         assertThat(product.getId()).isEqualTo(expectedId);
     }
 

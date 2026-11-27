@@ -30,13 +30,10 @@ class OrderItemTest {
     @Test
     @DisplayName("Creates an order item with a normalized name and preserves its values")
     void shouldCreateItemWithNormalizedName() {
-        // Given
         String productName = "\u2003 Blue Star \t\n";
 
-        // When
         OrderItem item = new OrderItem(PRODUCT_ID, productName, UNIT_PRICE, QUANTITY);
 
-        // Then
         assertThat(item.productId()).isEqualTo(PRODUCT_ID);
         assertThat(item.productName()).isEqualTo(PRODUCT_NAME);
         assertThat(item.unitPrice()).isEqualTo(UNIT_PRICE);

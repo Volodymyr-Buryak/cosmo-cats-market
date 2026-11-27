@@ -44,6 +44,13 @@ public final class Order {
         );
     }
 
+    @Builder(builderMethodName = "restoreBuilder", builderClassName = "RestoreBuilder")
+    public static Order restore(UUID id, UUID buyerId, List<OrderItem> items, Instant createdAt, OrderStatus status) {
+        Order order = new Order(Objects.requireNonNull(id, "Order ID must not be null"), buyerId, items, createdAt);
+        order.status = Objects.requireNonNull(status, "Order status must not be null");
+        return order;
+    }
+
     private static List<OrderItem> checkAndCopyItems(List<OrderItem> items) {
         return Optional.of(items)
                 .filter(orderItems -> !orderItems.isEmpty())

@@ -1,4 +1,4 @@
-package space.cosmocats.marketplace.product.persistence;
+package space.cosmocats.marketplace.product.persistence.mapper;
 
 import java.util.Currency;
 import java.math.BigDecimal;
@@ -10,6 +10,7 @@ import space.cosmocats.marketplace.product.domain.model.Product;
 import space.cosmocats.marketplace.common.pagination.PageResult;
 import space.cosmocats.marketplace.product.domain.model.value.Money;
 import space.cosmocats.marketplace.product.domain.model.value.Quantity;
+import space.cosmocats.marketplace.product.persistence.entity.ProductEntity;
 
 @Mapper
 public interface ProductPersistenceMapper {
