@@ -1,0 +1,757 @@
+openapi: "3.1.0"
+info:
+  title: "Cosmo Cats Category API"
+  description: "CRUD and name lookup API for the hierarchical product catalogue in the Cosmo Cats intergalactic marketplace."
+  version: "1.0.0"
+servers:
+  - url: "http://localhost:8081/marketplace/api/v1"
+    description: "Local development server"
+tags:
+  - name: "Categories"
+    description: "Product category catalogue and hierarchy operations"
+paths:
+  /categories:
+    get:
+      tags:
+        - "Categories"
+      summary: "Get all categories"
+      description: "Returns every category as an unpaginated array sorted by name and then ID. An empty catalogue returns an empty array."
+      operationId: "getAllCategories"
+      parameters:
+        - '$ref': "#/components/parameters/AcceptLanguage"
+      responses:
+        '200':
+          description: "All categories."
+          content:
+            application/json:
+              schema:
+                '$ref': "#/components/schemas/CategoryList"
+              examples:
+                categoryList:
+                  '$ref': "#/components/examples/CategoryList"
+                emptyCategoryList:
+                  '$ref': "#/components/examples/EmptyCategoryList"
+        '500':
+          description: "Unexpected server error."
+          content:
+            application/problem+json:
+              schema:
+                '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                internalServerError:
+                  '$ref': "#/components/examples/InternalServerError"
+    post:
+      tags:
+        - "Categories"
+      summary: "Create a category"
+      description: "Creates a category with a server-generated UUID. Name and description are stripped of leading and trailing whitespace before storage. A missing or null parentId creates a root category. The parent must exist, and names must be unique."
+      operationId: "createCategory"
+      parameters:
+        - '$ref': "#/components/parameters/AcceptLanguage"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              '$ref': "#/components/schemas/CategoryRequest"
+            examples:
+              rootCategory:
+                '$ref': "#/components/examples/CreateRootCategory"
+              childCategory:
+                '$ref': "#/components/examples/CreateChildCategory"
+      responses:
+        '201':
+          description: "Category created successfully."
+          content:
+            application/json:
+              schema:
+                '$ref': "#/components/schemas/CategoryResponse"
+              examples:
+                rootCategory:
+                  '$ref': "#/components/examples/RootCategory"
+                childCategory:
+                  '$ref': "#/components/examples/ChildCategory"
+          headers:
+            Location:
+              description: "Absolute URI of the newly created category."
+              schema:
+                type: "string"
+                format: "uri"
+              example: "http://localhost:8081/marketplace/api/v1/categories/20000000-0000-4000-8000-000000000001"
+        '400':
+          description: "The body is missing, malformed, contains an invalid UUID, or fails field validation."
+          content:
+            application/problem+json:
+              schema:
+                anyOf:
+                  - '$ref': "#/components/schemas/ValidationErrorResponse"
+                  - '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                categoryValidationError:
+                  '$ref': "#/components/examples/CategoryValidationError"
+                malformedRequest:
+                  '$ref': "#/components/examples/MalformedRequest"
+        '404':
+          description: "The selected parent or one of its ancestors was not found."
+          content:
+            application/problem+json:
+              schema:
+                '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                parentCategoryNotFound:
+                  '$ref': "#/components/examples/ParentCategoryNotFound"
+        '409':
+          description: "The normalized name or generated ID is already in use, or a database constraint prevents creation."
+          content:
+            application/problem+json:
+              schema:
+                '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                categoryConflict:
+                  '$ref': "#/components/examples/CategoryConflict"
+        '415':
+          description: "Request media type is not supported."
+          content:
+            application/problem+json:
+              schema:
+                '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                unsupportedMediaType:
+                  '$ref': "#/components/examples/UnsupportedMediaType"
+        '422':
+          description: "The selected parent hierarchy contains a cycle."
+          content:
+            application/problem+json:
+              schema:
+                '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                createHierarchyCycle:
+                  '$ref': "#/components/examples/CreateHierarchyCycle"
+        '500':
+          description: "Unexpected server error."
+          content:
+            application/problem+json:
+              schema:
+                '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                internalServerError:
+                  '$ref': "#/components/examples/InternalServerError"
+  /categories/by-name:
+    get:
+      tags:
+        - "Categories"
+      summary: "Get a category by name"
+      description: "Finds a category by its stored name after stripping leading and trailing whitespace from the query value. The supplied name must be nonblank and no longer than 100 characters before stripping."
+      operationId: "getCategoryByName"
+      parameters:
+        - '$ref': "#/components/parameters/AcceptLanguage"
+        - '$ref': "#/components/parameters/CategoryName"
+      responses:
+        '200':
+          description: "The matching category."
+          content:
+            application/json:
+              schema:
+                '$ref': "#/components/schemas/CategoryResponse"
+              examples:
+                rootCategory:
+                  '$ref': "#/components/examples/RootCategory"
+        '400':
+          description: "The name query parameter is missing, blank, or longer than 100 characters. Query validation uses the standard problem response without a field errors array."
+          content:
+            application/problem+json:
+              schema:
+                '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                missingName:
+                  '$ref': "#/components/examples/MissingName"
+                invalidName:
+                  '$ref': "#/components/examples/InvalidName"
+        '404':
+          description: "No category matches the supplied name."
+          content:
+            application/problem+json:
+              schema:
+                '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                categoryNameNotFound:
+                  '$ref': "#/components/examples/CategoryNameNotFound"
+        '500':
+          description: "Unexpected server error."
+          content:
+            application/problem+json:
+              schema:
+                '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                internalServerErrorByName:
+                  '$ref': "#/components/examples/InternalServerErrorByName"
+  /categories/{id}:
+    get:
+      tags:
+        - "Categories"
+      summary: "Get a category by ID"
+      description: "Returns the category with the requested UUID."
+      operationId: "getCategoryById"
+      parameters:
+        - '$ref': "#/components/parameters/AcceptLanguage"
+        - '$ref': "#/components/parameters/CategoryId"
+      responses:
+        '200':
+          description: "The requested category."
+          content:
+            application/json:
+              schema:
+                '$ref': "#/components/schemas/CategoryResponse"
+              examples:
+                rootCategory:
+                  '$ref': "#/components/examples/RootCategory"
+                childCategory:
+                  '$ref': "#/components/examples/ChildCategory"
+        '400':
+          description: "The category ID is not a UUID."
+          content:
+            application/problem+json:
+              schema:
+                '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                invalidCategoryId:
+                  '$ref': "#/components/examples/InvalidCategoryId"
+        '404':
+          description: "The category was not found."
+          content:
+            application/problem+json:
+              schema:
+                '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                categoryNotFound:
+                  '$ref': "#/components/examples/CategoryNotFound"
+        '500':
+          description: "Unexpected server error."
+          content:
+            application/problem+json:
+              schema:
+                '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                internalServerErrorById:
+                  '$ref': "#/components/examples/InternalServerErrorById"
+    put:
+      tags:
+        - "Categories"
+      summary: "Update a category"
+      description: "Replaces all editable fields of the category identified by the path UUID. Name and description are stripped before storage. Omit parentId or set it to null to make the category a root. The parent must exist; self-parenting and hierarchy cycles are rejected."
+      operationId: "updateCategory"
+      parameters:
+        - '$ref': "#/components/parameters/AcceptLanguage"
+        - '$ref': "#/components/parameters/CategoryId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              '$ref': "#/components/schemas/CategoryRequest"
+            examples:
+              rootCategory:
+                '$ref': "#/components/examples/CreateRootCategory"
+              childCategory:
+                '$ref': "#/components/examples/CreateChildCategory"
+      responses:
+        '200':
+          description: "Category updated successfully."
+          content:
+            application/json:
+              schema:
+                '$ref': "#/components/schemas/CategoryResponse"
+              examples:
+                rootCategory:
+                  '$ref': "#/components/examples/RootCategory"
+                childCategory:
+                  '$ref': "#/components/examples/ChildCategory"
+        '400':
+          description: "The category ID or body is malformed, or field validation failed."
+          content:
+            application/problem+json:
+              schema:
+                anyOf:
+                  - '$ref': "#/components/schemas/ValidationErrorResponse"
+                  - '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                invalidCategoryId:
+                  '$ref': "#/components/examples/InvalidCategoryId"
+                categoryValidationErrorById:
+                  '$ref': "#/components/examples/CategoryValidationErrorById"
+                malformedRequestById:
+                  '$ref': "#/components/examples/MalformedRequestById"
+        '404':
+          description: "The category, selected parent, or one of its ancestors was not found."
+          content:
+            application/problem+json:
+              schema:
+                '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                categoryNotFound:
+                  '$ref': "#/components/examples/CategoryNotFound"
+                updateParentNotFound:
+                  '$ref': "#/components/examples/UpdateParentNotFound"
+        '409':
+          description: "Another category already uses the normalized name, or a database constraint prevents the update."
+          content:
+            application/problem+json:
+              schema:
+                '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                updateCategoryConflict:
+                  '$ref': "#/components/examples/UpdateCategoryConflict"
+        '415':
+          description: "Request media type is not supported."
+          content:
+            application/problem+json:
+              schema:
+                '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                unsupportedMediaTypeById:
+                  '$ref': "#/components/examples/UnsupportedMediaTypeById"
+        '422':
+          description: "The category cannot be its own parent and its hierarchy must remain acyclic."
+          content:
+            application/problem+json:
+              schema:
+                '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                ownParent:
+                  '$ref': "#/components/examples/OwnParent"
+                hierarchyCycle:
+                  '$ref': "#/components/examples/HierarchyCycle"
+        '500':
+          description: "Unexpected server error."
+          content:
+            application/problem+json:
+              schema:
+                '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                internalServerErrorById:
+                  '$ref': "#/components/examples/InternalServerErrorById"
+    delete:
+      tags:
+        - "Categories"
+      summary: "Delete a category"
+      description: "Permanently deletes a category. Deletion is rejected while a product or child category still references it."
+      operationId: "deleteCategory"
+      parameters:
+        - '$ref': "#/components/parameters/AcceptLanguage"
+        - '$ref': "#/components/parameters/CategoryId"
+      responses:
+        '204':
+          description: "Category deleted successfully. The response has no body."
+        '400':
+          description: "The category ID is not a UUID."
+          content:
+            application/problem+json:
+              schema:
+                '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                invalidCategoryId:
+                  '$ref': "#/components/examples/InvalidCategoryId"
+        '404':
+          description: "The category was not found."
+          content:
+            application/problem+json:
+              schema:
+                '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                categoryNotFound:
+                  '$ref': "#/components/examples/CategoryNotFound"
+        '409':
+          description: "The category is still referenced by products or child categories."
+          content:
+            application/problem+json:
+              schema:
+                '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                deleteCategoryConflict:
+                  '$ref': "#/components/examples/DeleteCategoryConflict"
+        '500':
+          description: "Unexpected server error."
+          content:
+            application/problem+json:
+              schema:
+                '$ref': "#/components/schemas/ErrorResponse"
+              examples:
+                internalServerErrorById:
+                  '$ref': "#/components/examples/InternalServerErrorById"
+components:
+  parameters:
+    AcceptLanguage:
+      in: "header"
+      name: "Accept-Language"
+      required: false
+      description: "Preferred language for human-readable error messages. Supported languages are English (`en`) and Ukrainian (`uk`). English is used by default."
+      schema:
+        type: "string"
+        default: "en"
+      example: "uk"
+    CategoryId:
+      in: "path"
+      name: "id"
+      required: true
+      description: "Category UUID."
+      schema:
+        type: "string"
+        format: "uuid"
+      example: "20000000-0000-4000-8000-000000000001"
+    CategoryName:
+      in: "query"
+      name: "name"
+      required: true
+      description: "Stored category name. Leading and trailing whitespace is stripped for lookup after request validation."
+      schema:
+        type: "string"
+        minLength: 1
+        maxLength: 100
+        pattern: "\\S"
+      example: "Food"
+  schemas:
+    CategoryRequest:
+      type: "object"
+      description: "Editable category fields. The UUID is generated on creation and taken from the path on update."
+      required:
+        - "name"
+        - "description"
+      properties:
+        name:
+          type: "string"
+          minLength: 1
+          maxLength: 100
+          pattern: "\\S"
+          description: "Nonblank category name, limited to 100 characters before leading and trailing whitespace is stripped. The stored name must be unique."
+          example: "Food"
+        description:
+          type: "string"
+          minLength: 1
+          maxLength: 500
+          pattern: "\\S"
+          description: "Nonblank category description, limited to 500 characters before leading and trailing whitespace is stripped."
+          example: "Catalog category for Food"
+        parentId:
+          type:
+            - "string"
+            - "null"
+          format: "uuid"
+          description: "Parent category UUID, or null for a root category. In requests, omission is equivalent to null. The parent must exist and cannot introduce a hierarchy cycle."
+          example: null
+    CategoryResponse:
+      type: "object"
+      required:
+        - "id"
+        - "name"
+        - "description"
+        - "parentId"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          readOnly: true
+          description: "Server-generated category UUID."
+          example: "20000000-0000-4000-8000-000000000001"
+        name:
+          type: "string"
+          minLength: 1
+          maxLength: 100
+          pattern: "\\S"
+          description: "Nonblank category name, limited to 100 characters before leading and trailing whitespace is stripped. The stored name must be unique."
+          example: "Food"
+        description:
+          type: "string"
+          minLength: 1
+          maxLength: 500
+          pattern: "\\S"
+          description: "Nonblank category description, limited to 500 characters before leading and trailing whitespace is stripped."
+          example: "Catalog category for Food"
+        parentId:
+          type:
+            - "string"
+            - "null"
+          format: "uuid"
+          description: "Parent category UUID, or null for a root category. In requests, omission is equivalent to null. The parent must exist and cannot introduce a hierarchy cycle."
+          example: null
+    CategoryList:
+      type: "array"
+      description: "Unpaginated categories ordered by name and then ID."
+      items:
+        '$ref': "#/components/schemas/CategoryResponse"
+    ErrorResponse:
+      type: "object"
+      description: "Problem detail response. Human-readable title and detail are localized according to Accept-Language. Framework errors use about:blank; application errors use a dedicated type URI."
+      required:
+        - "title"
+        - "status"
+        - "detail"
+        - "instance"
+      properties:
+        type:
+          type: "string"
+          format: "uri-reference"
+          description: "Problem type URI. about:blank is implied if omitted."
+        title:
+          type: "string"
+          description: "Short localized error summary."
+        status:
+          type: "integer"
+          description: "HTTP status code."
+        detail:
+          type: "string"
+          description: "Localized explanation of the error."
+        instance:
+          type: "string"
+          format: "uri-reference"
+          description: "Request URI without its query string."
+    ValidationErrorResponse:
+      allOf:
+        - '$ref': "#/components/schemas/ErrorResponse"
+        - type: "object"
+          required:
+            - "errors"
+          properties:
+            errors:
+              type: "array"
+              minItems: 1
+              description: "Individual request body validation failures."
+              items:
+                '$ref': "#/components/schemas/Violation"
+    Violation:
+      type: "object"
+      required:
+        - "detail"
+      properties:
+        detail:
+          type: "string"
+          description: "Localized validation message."
+          example: "must not be blank"
+        pointer:
+          type:
+            - "string"
+            - "null"
+          description: "JSON Pointer-like field path when the violation refers to a field."
+          example: "/name"
+  examples:
+    CreateRootCategory:
+      summary: "Create a root category"
+      value:
+        name: "Food"
+        description: "Catalog category for Food"
+        parentId: null
+    CreateChildCategory:
+      summary: "Create a child category"
+      value:
+        name: "Catnip"
+        description: "Catnip treats and supplements"
+        parentId: "20000000-0000-4000-8000-000000000001"
+    RootCategory:
+      summary: "Root category response"
+      value:
+        id: "20000000-0000-4000-8000-000000000001"
+        name: "Food"
+        description: "Catalog category for Food"
+        parentId: null
+    ChildCategory:
+      summary: "Child category response"
+      value:
+        id: "20000000-0000-4000-8000-000000000005"
+        name: "Catnip"
+        description: "Catnip treats and supplements"
+        parentId: "20000000-0000-4000-8000-000000000001"
+    CategoryList:
+      summary: "All categories sorted by name and then ID"
+      value:
+        - id: "20000000-0000-4000-8000-000000000005"
+          name: "Catnip"
+          description: "Catnip treats and supplements"
+          parentId: "20000000-0000-4000-8000-000000000001"
+        - id: "20000000-0000-4000-8000-000000000001"
+          name: "Food"
+          description: "Catalog category for Food"
+          parentId: null
+    EmptyCategoryList:
+      summary: "No categories exist"
+      value: []
+    CategoryNotFound:
+      summary: "Not Found"
+      value:
+        type: "https://cosmo-cats.market/errors/not-found"
+        title: "Not Found"
+        status: 404
+        detail: "Category was not found."
+        instance: "/marketplace/api/v1/categories/20000000-0000-4000-8000-000000000001"
+    ParentCategoryNotFound:
+      summary: "Not Found"
+      value:
+        type: "https://cosmo-cats.market/errors/not-found"
+        title: "Not Found"
+        status: 404
+        detail: "Category was not found."
+        instance: "/marketplace/api/v1/categories"
+    CategoryNameNotFound:
+      summary: "Not Found"
+      value:
+        type: "https://cosmo-cats.market/errors/not-found"
+        title: "Not Found"
+        status: 404
+        detail: "Category named Food was not found."
+        instance: "/marketplace/api/v1/categories/by-name"
+    CategoryConflict:
+      summary: "Conflict"
+      value:
+        type: "https://cosmo-cats.market/errors/conflict"
+        title: "Conflict"
+        status: 409
+        detail: "A category with this name or ID already exists, or the category is still in use."
+        instance: "/marketplace/api/v1/categories"
+    DeleteCategoryConflict:
+      summary: "Conflict"
+      value:
+        type: "https://cosmo-cats.market/errors/conflict"
+        title: "Conflict"
+        status: 409
+        detail: "A category with this name or ID already exists, or the category is still in use."
+        instance: "/marketplace/api/v1/categories/20000000-0000-4000-8000-000000000001"
+    UpdateCategoryConflict:
+      summary: "Conflict"
+      value:
+        type: "https://cosmo-cats.market/errors/conflict"
+        title: "Conflict"
+        status: 409
+        detail: "A category with this name or ID already exists, or the category is still in use."
+        instance: "/marketplace/api/v1/categories/20000000-0000-4000-8000-000000000001"
+    OwnParent:
+      summary: "Domain rule violation"
+      value:
+        type: "https://cosmo-cats.market/errors/domain-rule-violation"
+        title: "Domain rule violation"
+        status: 422
+        detail: "Category \"Food\" cannot be its own parent."
+        instance: "/marketplace/api/v1/categories/20000000-0000-4000-8000-000000000001"
+    HierarchyCycle:
+      summary: "Domain rule violation"
+      value:
+        type: "https://cosmo-cats.market/errors/domain-rule-violation"
+        title: "Domain rule violation"
+        status: 422
+        detail: "The parent category would create a cycle in the category hierarchy."
+        instance: "/marketplace/api/v1/categories/20000000-0000-4000-8000-000000000001"
+    CreateHierarchyCycle:
+      summary: "Domain rule violation"
+      value:
+        type: "https://cosmo-cats.market/errors/domain-rule-violation"
+        title: "Domain rule violation"
+        status: 422
+        detail: "The parent category would create a cycle in the category hierarchy."
+        instance: "/marketplace/api/v1/categories"
+    InvalidCategoryId:
+      summary: "Invalid request value"
+      value:
+        type: "about:blank"
+        title: "Invalid request value"
+        status: 400
+        detail: "A request value has an invalid type."
+        instance: "/marketplace/api/v1/categories/not-a-uuid"
+    MissingName:
+      summary: "Missing request parameter"
+      value:
+        type: "about:blank"
+        title: "Missing request parameter"
+        status: 400
+        detail: "Required request parameter name is missing."
+        instance: "/marketplace/api/v1/categories/by-name"
+    InvalidName:
+      summary: "Validation error"
+      value:
+        type: "about:blank"
+        title: "Validation error"
+        status: 400
+        detail: "One or more request values are invalid."
+        instance: "/marketplace/api/v1/categories/by-name"
+    InternalServerError:
+      summary: "Internal Server Error"
+      value:
+        type: "https://cosmo-cats.market/errors/internal-server-error"
+        title: "Internal Server Error"
+        status: 500
+        detail: "An unexpected error occurred."
+        instance: "/marketplace/api/v1/categories"
+    MalformedRequest:
+      summary: "Invalid request body"
+      value:
+        type: "about:blank"
+        title: "Invalid request body"
+        status: 400
+        detail: "Request body is missing or malformed."
+        instance: "/marketplace/api/v1/categories"
+    UnsupportedMediaType:
+      summary: "Unsupported media type"
+      value:
+        type: "about:blank"
+        title: "Unsupported media type"
+        status: 415
+        detail: "Request media type is not supported."
+        instance: "/marketplace/api/v1/categories"
+    CategoryValidationError:
+      summary: "Validation error"
+      value:
+        type: "https://cosmo-cats.market/errors/validation-error"
+        title: "Validation error"
+        status: 400
+        detail: "Validation failed for one or more fields. Please check your request parameters."
+        instance: "/marketplace/api/v1/categories"
+        errors:
+          - detail: "must not be blank"
+            pointer: "/name"
+    InternalServerErrorById:
+      summary: "Internal Server Error"
+      value:
+        type: "https://cosmo-cats.market/errors/internal-server-error"
+        title: "Internal Server Error"
+        status: 500
+        detail: "An unexpected error occurred."
+        instance: "/marketplace/api/v1/categories/20000000-0000-4000-8000-000000000001"
+    MalformedRequestById:
+      summary: "Invalid request body"
+      value:
+        type: "about:blank"
+        title: "Invalid request body"
+        status: 400
+        detail: "Request body is missing or malformed."
+        instance: "/marketplace/api/v1/categories/20000000-0000-4000-8000-000000000001"
+    UnsupportedMediaTypeById:
+      summary: "Unsupported media type"
+      value:
+        type: "about:blank"
+        title: "Unsupported media type"
+        status: 415
+        detail: "Request media type is not supported."
+        instance: "/marketplace/api/v1/categories/20000000-0000-4000-8000-000000000001"
+    CategoryValidationErrorById:
+      summary: "Validation error"
+      value:
+        type: "https://cosmo-cats.market/errors/validation-error"
+        title: "Validation error"
+        status: 400
+        detail: "Validation failed for one or more fields. Please check your request parameters."
+        instance: "/marketplace/api/v1/categories/20000000-0000-4000-8000-000000000001"
+        errors:
+          - detail: "must not be blank"
+            pointer: "/name"
+    InternalServerErrorByName:
+      summary: "Internal Server Error"
+      value:
+        type: "https://cosmo-cats.market/errors/internal-server-error"
+        title: "Internal Server Error"
+        status: 500
+        detail: "An unexpected error occurred."
+        instance: "/marketplace/api/v1/categories/by-name"
+    UpdateParentNotFound:
+      summary: "Not Found"
+      value:
+        type: "https://cosmo-cats.market/errors/not-found"
+        title: "Not Found"
+        status: 404
+        detail: "Category was not found."
+        instance: "/marketplace/api/v1/categories/20000000-0000-4000-8000-000000000001"

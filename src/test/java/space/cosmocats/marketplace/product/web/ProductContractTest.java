@@ -36,7 +36,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-
+import space.cosmocats.marketplace.product.web.controller.ProductController;
+import space.cosmocats.marketplace.product.web.mapper.ProductMapperImpl;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
@@ -52,6 +53,8 @@ import space.cosmocats.marketplace.common.web.error.model.ApiProblemFactory;
 import space.cosmocats.marketplace.product.domain.repository.ProductCriteria;
 import space.cosmocats.marketplace.product.application.service.ProductService;
 import space.cosmocats.marketplace.product.application.exception.ProductNotFoundException;
+import space.cosmocats.marketplace.product.application.exception.CategoryNotFoundException;
+import space.cosmocats.marketplace.product.application.exception.ProductConflictException;
 
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
@@ -99,14 +102,11 @@ class ProductContractTest {
     @Test
     @DisplayName("Returns a product by ID according to the OpenAPI contract")
     void shouldReturnProductMatchingOpenApiContract() throws Exception {
-        // Given
         Product product = product();
         when(productService.getProductById(PRODUCT_ID)).thenReturn(product);
 
-        // When
         MvcResult result = mockMvc.perform(apiRequest("GET", ITEM_PATH)).andReturn();
 
-        // Then
         assertValidInteraction(result, 200);
     }
 
@@ -259,6 +259,38 @@ class ProductContractTest {
 
     @ParameterizedTest(name = "{0}")
     @ValueSource(strings = {"POST", "PUT"})
+    @DisplayName("Returns a contract-compliant error when a product category is not found")
+    void shouldReturnCategoryNotFoundMatchingContract(String method) throws Exception {
+        String path = (method.equals("POST")) ? COLLECTION_PATH : ITEM_PATH;
+        stubServiceFailure(method, path, new CategoryNotFoundException(CATEGORY_ID));
+
+        MvcResult result = mockMvc.perform(operationRequest(method, path)).andReturn();
+
+        JsonNode problem = assertValidResponse(result, 404);
+        assertThat(problem.get("type").asString()).isEqualTo("https://cosmo-cats.market/errors/not-found");
+        assertThat(problem.get("title").asString()).isEqualTo("Not Found");
+        assertThat(problem.get("detail").asString()).isEqualTo("Category was not found.");
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = {"POST", "PUT", "DELETE"})
+    @DisplayName("Returns a contract-compliant error when a product write conflicts with existing data")
+    void shouldReturnProductConflictMatchingContract(String method) throws Exception {
+        String path = (method.equals("POST")) ? COLLECTION_PATH : ITEM_PATH;
+        stubServiceFailure(method, path, new ProductConflictException(PRODUCT_ID));
+
+        MvcResult result = mockMvc.perform(operationRequest(method, path)).andReturn();
+
+        JsonNode problem = assertValidResponse(result, 409);
+        assertThat(problem.get("type").asString()).isEqualTo("https://cosmo-cats.market/errors/conflict");
+        assertThat(problem.get("title").asString()).isEqualTo("Conflict");
+        assertThat(problem.get("detail").asString()).isEqualTo(
+                "A product with this name already exists in the category, its ID is already used, "
+                        + "or the product is referenced by an order.");
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = {"POST", "PUT"})
     @DisplayName("Returns a contract-compliant error for unsupported media types")
     void shouldReturnUnsupportedMediaTypeMatchingContract(String method) throws Exception {
         String path = method.equals("POST") ? COLLECTION_PATH : ITEM_PATH;
@@ -372,6 +404,7 @@ class ProductContractTest {
         Request request = MockMvcRequest.of(result.getRequest());
         ValidationReport report = validator.validateResponse(request.getPath(), request.getMethod(),
                 MockMvcResponse.of(result.getResponse()));
+
         assertThat(report.hasErrors())
                 .as("OpenAPI response validation errors: %s", report.getMessages()).isFalse();
 

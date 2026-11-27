@@ -8,6 +8,8 @@ import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.stream.Stream;
 
+import space.cosmocats.marketplace.product.web.controller.ProductController;
+import space.cosmocats.marketplace.product.web.mapper.ProductMapperImpl;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -82,14 +84,11 @@ class ProductControllerTest {
     @Test
     @DisplayName("Returns an existing product with all response fields")
     void shouldReturnProductById() throws Exception {
-        // Given
         Product product = product();
         when(productService.getProductById(PRODUCT_ID)).thenReturn(product);
 
-        // When
         MvcResult result = mockMvc.perform(get(PRODUCTS_PATH + "/{id}", PRODUCT_ID)).andReturn();
 
-        // Then
         assertThat(result.getResponse().getStatus()).isEqualTo(200);
         assertProductJson(responseBody(result), product);
         verify(productService).getProductById(PRODUCT_ID);

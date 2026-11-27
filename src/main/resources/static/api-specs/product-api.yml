@@ -127,6 +127,26 @@ paths:
                 malformedRequest:
                   $ref: '#/components/examples/MalformedRequest'
 
+        '404':
+          description: The requested product category was not found.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                categoryNotFound:
+                  $ref: '#/components/examples/CategoryNotFound'
+
+        '409':
+          description: Product creation conflicts with existing data, including a duplicate name in the category or an existing product ID.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                productConflict:
+                  $ref: '#/components/examples/ProductConflict'
+
         '415':
           description: Request media type is not supported.
           content:
@@ -260,7 +280,7 @@ paths:
                   $ref: '#/components/examples/MalformedUpdateRequest'
 
         '404':
-          description: Product was not found.
+          description: Product or the requested product category was not found.
           content:
             application/problem+json:
               schema:
@@ -268,6 +288,18 @@ paths:
               examples:
                 productNotFound:
                   $ref: '#/components/examples/ProductNotFound'
+                categoryNotFound:
+                  $ref: '#/components/examples/CategoryNotFoundById'
+
+        '409':
+          description: Product update conflicts with existing data, including a duplicate name in the category.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                productConflict:
+                  $ref: '#/components/examples/ProductConflictById'
 
         '415':
           description: Request media type is not supported.
@@ -329,6 +361,16 @@ paths:
               examples:
                 productNotFound:
                   $ref: '#/components/examples/ProductNotFound'
+
+        '409':
+          description: Product cannot be deleted because it is referenced by an order or conflicts with existing data.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                productConflict:
+                  $ref: '#/components/examples/ProductConflictById'
 
         '500':
           description: Unexpected server error.
@@ -604,6 +646,42 @@ components:
           status: 404
           detail: Product was not found.
           instance: /marketplace/api/v1/products/00000000-0000-0000-0000-000000000000
+
+      CategoryNotFound:
+        summary: Product category was not found
+        value:
+          type: https://cosmo-cats.market/errors/not-found
+          title: Not Found
+          status: 404
+          detail: Category was not found.
+          instance: /marketplace/api/v1/products
+
+      CategoryNotFoundById:
+        summary: Product category was not found during update
+        value:
+          type: https://cosmo-cats.market/errors/not-found
+          title: Not Found
+          status: 404
+          detail: Category was not found.
+          instance: /marketplace/api/v1/products/10000000-0000-4000-8000-000000000002
+
+      ProductConflict:
+        summary: Product creation conflicts with existing data
+        value:
+          type: https://cosmo-cats.market/errors/conflict
+          title: Conflict
+          status: 409
+          detail: A product with this name already exists in the category, its ID is already used, or the product is referenced by an order.
+          instance: /marketplace/api/v1/products
+
+      ProductConflictById:
+        summary: Product update or deletion conflicts with existing data
+        value:
+          type: https://cosmo-cats.market/errors/conflict
+          title: Conflict
+          status: 409
+          detail: A product with this name already exists in the category, its ID is already used, or the product is referenced by an order.
+          instance: /marketplace/api/v1/products/10000000-0000-4000-8000-000000000002
 
       ProductUpdateValidationErrorResponse:
         summary: Invalid product fields
