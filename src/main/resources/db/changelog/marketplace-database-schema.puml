@@ -1,0 +1,65 @@
+@startuml
+
+top to bottom direction
+skinparam nodesep 120
+skinparam ranksep 90
+skinparam ArrowFontSize 12
+skinparam ArrowFontColor #395776
+skinparam defaultFontSize 14
+hide circle
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam linetype polyline
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor #F5F8FC
+skinparam classBorderColor #395776
+skinparam ArrowColor #395776
+hide methods
+
+entity categories {
+  id : UUID <<PK>>
+  --
+  name : TEXT
+  description : TEXT
+  parent_id : UUID <<FK>>
+}
+
+entity products {
+  id : UUID <<PK>>
+  --
+  name : TEXT
+  description : TEXT
+  price_amount : NUMERIC
+  price_currency : VARCHAR(3)
+  stock : INTEGER
+  category_id : UUID <<FK>>
+}
+
+entity orders {
+  id : UUID <<PK>>
+  --
+  buyer_id : UUID
+  created_at : TIMESTAMPTZ
+  status : VARCHAR(16)
+  currency : VARCHAR(3)
+}
+
+entity order_items {
+  id : BIGINT <<PK>>
+  --
+  order_id : UUID <<FK>>
+  position : INTEGER
+  product_id : UUID <<FK>>
+  product_name : TEXT
+  unit_price_amount : NUMERIC
+  quantity : INTEGER
+}
+
+categories |o-left-o{ categories : parent_id → id
+categories ||-down-o{ products : category_id → id
+orders ||-down-o{ order_items : order_id → id
+products ||-right-o{ order_items : product_id → id
+
+categories -[hidden]right- orders
+
+@enduml
