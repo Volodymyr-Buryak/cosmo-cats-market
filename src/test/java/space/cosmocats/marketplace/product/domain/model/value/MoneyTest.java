@@ -22,13 +22,10 @@ class MoneyTest {
     @DisplayName("Accepts a non-negative amount without rounding and preserves the currency")
     @ValueSource(strings = {"0", "12.50", "1.234"})
     void shouldAcceptNonNegativeAmountWithoutRounding(String amount) {
-        // Given
         BigDecimal expectedAmount = new BigDecimal(amount);
 
-        // When
         Money money = new Money(USD, expectedAmount);
 
-        // Then
         assertThat(money.currency()).isEqualTo(USD);
         assertThat(money.amount()).isEqualByComparingTo(expectedAmount);
     }

@@ -3,6 +3,7 @@ package space.cosmocats.marketplace.product.persistence.repository;
 import java.util.UUID;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.domain.PageRequest;
@@ -11,14 +12,20 @@ import space.cosmocats.marketplace.common.pagination.PageResult;
 import space.cosmocats.marketplace.product.domain.repository.ProductSort;
 import space.cosmocats.marketplace.product.domain.repository.ProductCriteria;
 import space.cosmocats.marketplace.product.domain.repository.ProductRepository;
-import space.cosmocats.marketplace.product.persistence.ProductPersistenceMapper;
+import space.cosmocats.marketplace.product.persistence.mapper.ProductPersistenceMapper;
 
 @Repository
 @RequiredArgsConstructor
 public class ProductRepositoryAdapter implements ProductRepository {
 
+    private final EntityManager entityManager;
     private final JpaProductRepository jpaProductRepository;
     private final ProductPersistenceMapper productPersistenceMapper;
+
+    @Override
+    public boolean existsByCategoryIdAndNameAndIdNot(UUID categoryId, String name, UUID id) {
+        return jpaProductRepository.existsByCategoryIdRefAndNameAndIdNot(categoryId, name, id);
+    }
 
     @Override
     public Optional<Product> findById(UUID id) {
@@ -37,9 +44,10 @@ public class ProductRepositoryAdapter implements ProductRepository {
 
     @Override
     public Product save(Product product) {
-        return productPersistenceMapper.toDomain(
-                jpaProductRepository.save(productPersistenceMapper.toEntity(product))
-        );
+        var entity = productPersistenceMapper.toEntity(product);
+        entityManager.persist(entity);
+        jpaProductRepository.flush();
+        return productPersistenceMapper.toDomain(entity);
     }
 
     @Override
@@ -47,7 +55,7 @@ public class ProductRepositoryAdapter implements ProductRepository {
         return jpaProductRepository.findById(product.getId())
                 .map(entity -> {
                     productPersistenceMapper.updateEntity(product, entity);
-                    return productPersistenceMapper.toDomain(jpaProductRepository.save(entity));
+                    return productPersistenceMapper.toDomain(jpaProductRepository.saveAndFlush(entity));
                 });
     }
 
@@ -56,6 +64,7 @@ public class ProductRepositoryAdapter implements ProductRepository {
         return jpaProductRepository.findById(id)
                 .map(entity -> {
                     jpaProductRepository.delete(entity);
+                    jpaProductRepository.flush();
                     return true;
                 })
                 .orElse(false);

@@ -7,7 +7,7 @@ tasks.withType(Test).configureEach {
     testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath
     javaLauncher = javaToolchains.launcherFor(java.toolchain)
-    jvmArgs "-javaagent:${configurations.mockitoAgent.asPath}"
+    jvmArgs "-javaagent:${configurations.mockitoAgent.asPath}", '-Duser.timezone=UTC'
 
     def testType = name == 'integrationTest' ? 'Thin Integration Test' : 'Unit Test'
     def testSummaryFile = layout.buildDirectory.file("reports/tests/${name}/test-summary.md").get().asFile

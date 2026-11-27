@@ -22,13 +22,10 @@ class CartItemTest {
     @DisplayName("Creates an item with a positive quantity and preserves its values")
     @ValueSource(ints = {1, Integer.MAX_VALUE})
     void shouldCreateItemWithPositiveQuantity(int value) {
-        // Given
         Quantity quantity = new Quantity(value);
 
-        // When
         CartItem item = new CartItem(PRODUCT_ID, quantity);
 
-        // Then
         assertThat(item.productId()).isEqualTo(PRODUCT_ID);
         assertThat(item.quantity()).isEqualTo(quantity);
     }

@@ -1,4 +1,4 @@
-package space.cosmocats.marketplace.product.web;
+package space.cosmocats.marketplace.product.web.mapper;
 
 import java.util.UUID;
 import java.util.Currency;

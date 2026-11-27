@@ -27,14 +27,11 @@ class CartTest {
     @Test
     @DisplayName("Adds a new product to an empty cart with the requested quantity")
     void shouldAddNewProductToEmptyCart() {
-        // Given
         Cart cart = Cart.create(USER_ID);
         Quantity quantity = new Quantity(2);
 
-        // When
         cart.addItem(PRODUCT_ID, quantity);
 
-        // Then
         assertThat(cart.getItems()).containsExactly(new CartItem(PRODUCT_ID, quantity));
     }
 

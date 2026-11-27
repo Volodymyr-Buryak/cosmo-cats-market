@@ -26,13 +26,10 @@ class CategoryTest {
     @Test
     @DisplayName("Preserves the provided category ID")
     void shouldPreserveProvidedId() {
-        // Given
         var builder = validCategoryBuilder().id(CATEGORY_ID);
 
-        // When
         Category category = builder.build();
 
-        // Then
         assertThat(category.getId()).isEqualTo(CATEGORY_ID);
     }
 

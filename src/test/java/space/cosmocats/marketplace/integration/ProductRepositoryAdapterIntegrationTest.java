@@ -27,7 +27,7 @@ import space.cosmocats.marketplace.product.domain.model.value.Money;
 import space.cosmocats.marketplace.product.domain.model.value.Quantity;
 import space.cosmocats.marketplace.product.domain.repository.ProductSort;
 import space.cosmocats.marketplace.product.domain.repository.ProductCriteria;
-import space.cosmocats.marketplace.product.persistence.ProductPersistenceMapperImpl;
+import space.cosmocats.marketplace.product.persistence.mapper.ProductPersistenceMapperImpl;
 
 import space.cosmocats.marketplace.product.persistence.repository.JpaProductRepository;
 import space.cosmocats.marketplace.product.persistence.repository.ProductRepositoryAdapter;
@@ -38,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import({ProductRepositoryAdapter.class, ProductPersistenceMapperImpl.class})
-class ProductRepositoryAdapterIntegrationTest {
+class ProductRepositoryAdapterIntegrationTest extends PostgreSqlIntegrationTest {
 
     private static final UUID STAR_LAMP_ID = UUID.fromString("30000000-0000-4000-8000-000000000001");
     private static final UUID GALAXY_BOWL_ID = UUID.fromString("30000000-0000-4000-8000-000000000002");
@@ -60,13 +60,10 @@ class ProductRepositoryAdapterIntegrationTest {
     @Test
     @DisplayName("Finds an existing product by ID and maps all fields")
     void shouldFindExistingProductById() {
-        // Given
         UUID productId = STAR_LAMP_ID;
 
-        // When
         Optional<Product> result = productRepositoryAdapter.findById(productId);
 
-        // Then
         assertThat(result).hasValueSatisfying(product -> {
             assertThat(product.getId()).isEqualTo(productId);
             assertThat(product.getName()).isEqualTo("Star Lamp");
